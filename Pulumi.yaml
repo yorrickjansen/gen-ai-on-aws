@@ -1,0 +1,10 @@
+name: aws-py-apigateway-lambda-serverless
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: A minimal AWS Python Pulumi program
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: https://github.com/pulumi/examples/blob/master/aws-py-apigateway-lambda-serverless/README.md
