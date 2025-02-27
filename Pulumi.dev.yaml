@@ -1,2 +1,3 @@
 config:
   pulumi:template: https://github.com/pulumi/examples/tree/master/aws-py-apigateway-lambda-serverless
+  aws:region: us-east-1
