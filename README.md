@@ -9,6 +9,8 @@ This repo contains an example on how to quickly deploy prod ready GenAI apps in 
 
 `provisioning` directory contains the scripts to create resources.
 `app` contains the python app code.
+Each directory contains a different dependency set (pyproject file).
+Dependencies at the root of the project aim to apply  consistent rules at repo level.
 
 
 ## Installation
@@ -19,7 +21,12 @@ You also need Docker in order to package the code before deploying.
 
 ## Package and deploy code
 
+```
+cd app
+./build_lambda_package.sh
+```
 
+Then
 
 
 ## TODO

@@ -120,7 +120,7 @@ standard = [
 ]
 
 [[package]]
-name = "gen-ai-on-aws-provisioning"
+name = "gen-ai-on-aws-app"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
