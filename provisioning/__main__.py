@@ -1,11 +1,14 @@
 """An AWS Python Pulumi program"""
 
+import os
+import glob
 import iam
 import pulumi
 import pulumi_aws as aws
+from pulumi import Config
 
 region = aws.config.region
-
+config = pulumi.Config()
 custom_stage_name = "example"
 
 ##################
@@ -13,6 +16,21 @@ custom_stage_name = "example"
 ##################
 
 # Create a Lambda function, using code from the `./app` folder.
+
+# pulumi up -c APP_VERSION=latest
+app_version = config.require("APP_VERSION")
+
+
+if app_version == "latest":
+    # find the latest file named `package-*.zip` in the `app/build/packages` folder, using file timestamp
+    list_of_files = glob.glob("../app/build/packages/package-*.zip")
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(f"Using latest app version: {latest_file}")
+    code = pulumi.FileArchive(latest_file)
+else:
+    print(f"Using app version: {app_version}")
+    code = pulumi.FileArchive(f"../app/build/packages/package-{app_version}.zip")
+
 
 lambda_func = aws.lambda_.Function(
     "mylambda",
