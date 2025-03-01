@@ -21,12 +21,23 @@ You also need Docker in order to package the code before deploying.
 
 ## Package and deploy code
 
-```
+```fish
 cd app
 ./build_lambda_package.sh
 ```
 
-Then
+Then create resources in AWS
+
+```fish
+cd provisioning
+pulumi up
+```
+
+Test endpoint
+
+```fish
+http GET (pulumi stack output apigateway-rest-endpoint)"/hello"
+```
 
 
 ## TODO

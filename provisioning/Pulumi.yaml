@@ -1,12 +1,9 @@
-name: aws-py-apigateway-lambda-serverless
+name: gen-ai-on-aws
 runtime:
   name: python
   options:
     toolchain: uv
     virtualenv: .venv
-description: A minimal AWS Python Pulumi program
+description: Generative AI on AWS
 config:
   APP_VERSION: latest
-  pulumi:tags:
-    value:
-      pulumi:template: https://github.com/pulumi/examples/blob/master/aws-py-apigateway-lambda-serverless/README.md
