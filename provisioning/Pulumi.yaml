@@ -6,6 +6,7 @@ runtime:
     virtualenv: .venv
 description: A minimal AWS Python Pulumi program
 config:
+  APP_VERSION: latest
   pulumi:tags:
     value:
       pulumi:template: https://github.com/pulumi/examples/blob/master/aws-py-apigateway-lambda-serverless/README.md
