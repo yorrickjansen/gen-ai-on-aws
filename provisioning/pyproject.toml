@@ -2,8 +2,14 @@
 name = "gen_ai_on_aws_provisioning"
 version = "0.1.0"
 description = "Provisioning scripts for GenAI on AWS"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "pulumi>=3.0.0,<4.0.0",
     "pulumi-aws>=6.0.2,<7.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "devtools>=0.12.2",
+    "ipython>=9.0.0",
 ]

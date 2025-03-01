@@ -17,9 +17,9 @@ custom_stage_name = "example"
 lambda_func = aws.lambda_.Function(
     "mylambda",
     role=iam.lambda_role.arn,
-    runtime="python3.12",
-    handler="hello.handler",
-    code=pulumi.AssetArchive({".": pulumi.FileArchive("../hello_lambda")}),
+    runtime="python3.13",
+    handler="gen_ai_on_aws.main.handler",
+    code=pulumi.FileArchive("../app/build/packages/package-b017e8e_SNAPSHOT.zip"),
 )
 
 
