@@ -33,11 +33,17 @@ else:
 
 
 lambda_func = aws.lambda_.Function(
-    "mylambda",
+    "app",
     role=iam.lambda_role.arn,
     runtime="python3.13",
     handler="gen_ai_on_aws.main.handler",
-    code=pulumi.FileArchive("../app/build/packages/package-e75ea75_SNAPSHOT.zip"),
+    code=code,
+    # source_code_hash=TODO,
+    environment={
+        "variables": {
+            "APP_VERSION": app_version,
+        },
+    },
 )
 
 
@@ -113,11 +119,10 @@ rest_invoke_permission = aws.lambda_.Permission(
 http_endpoint = aws.apigatewayv2.Api("http-api-pulumi-example", protocol_type="HTTP")
 
 http_lambda_backend = aws.apigatewayv2.Integration(
-    "example",
+    "lambda_integration",
     api_id=http_endpoint.id,
     integration_type="AWS_PROXY",
     connection_type="INTERNET",
-    description="Lambda example",
     integration_method="POST",
     integration_uri=lambda_func.arn,
     passthrough_behavior="WHEN_NO_MATCH",
@@ -126,14 +131,14 @@ http_lambda_backend = aws.apigatewayv2.Integration(
 url = http_lambda_backend.integration_uri
 
 http_route = aws.apigatewayv2.Route(
-    "example-route",
+    "proxy-route",
     api_id=http_endpoint.id,
     route_key="ANY /{proxy+}",
     target=http_lambda_backend.id.apply(lambda targetUrl: "integrations/" + targetUrl),
 )
 
 http_stage = aws.apigatewayv2.Stage(
-    "example-stage",
+    "stage",
     api_id=http_endpoint.id,
     route_settings=[
         {
@@ -157,7 +162,7 @@ http_invoke_permission = aws.lambda_.Permission(
 # Export the https endpoint of the running Rest API
 pulumi.export(
     "apigateway-rest-endpoint",
-    deployment.invoke_url.apply(lambda url: url + custom_stage_name + "/{proxy+}"),
+    deployment.invoke_url.apply(lambda url: url + custom_stage_name),
 )
 # See "Outputs" for (Inputs and Outputs)[https://www.pulumi.com/docs/intro/concepts/inputs-outputs/] the usage of the pulumi.Output.all function to do string concatenation
 pulumi.export(
