@@ -19,7 +19,7 @@ lambda_func = aws.lambda_.Function(
     role=iam.lambda_role.arn,
     runtime="python3.13",
     handler="gen_ai_on_aws.main.handler",
-    code=pulumi.FileArchive("../app/build/packages/package-b017e8e_SNAPSHOT.zip"),
+    code=pulumi.FileArchive("../app/build/packages/package-e75ea75_SNAPSHOT.zip"),
 )
 
 

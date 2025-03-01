@@ -1,5 +1,6 @@
-# https://docs.astral.sh/uv/guides/integration/aws-lambda/#deploying-a-zip-archive
+#!/usr/bin/env bash
 
+# https://docs.astral.sh/uv/guides/integration/aws-lambda/#deploying-a-zip-archive
 SHORT_SHA=$(git rev-parse --short HEAD)
 
 # Check if there are any changes in the current directory
@@ -27,4 +28,4 @@ cd ../../..
 zip -r build/packages/package-${SHORT_SHA}.zip gen_ai_on_aws
 
 
-echo "Built package: build/packages/package-${SHORT_SHA}.zip"
+echo "Built package: ./build/packages/package-${SHORT_SHA}.zip"
