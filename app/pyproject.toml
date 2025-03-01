@@ -1,7 +1,7 @@
 [project]
-name = "gen_ai_on_aws_provisioning"
+name = "gen_ai_on_aws_app"
 version = "0.1.0"
-description = "Provisioning scripts for GenAI on AWS"
+description = "App code for GenAI on AWS"
 requires-python = ">=3.13"
 dependencies = [
     # FastAPI is a modern web framework for building APIs with Python.
