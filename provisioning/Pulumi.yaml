@@ -3,7 +3,7 @@ runtime:
   name: python
   options:
     toolchain: uv
-    virtualenv: venv
+    virtualenv: .venv
 description: A minimal AWS Python Pulumi program
 config:
   pulumi:tags:

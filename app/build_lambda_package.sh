@@ -25,3 +25,6 @@ cd ../../..
 
 # Finally, we can add the application code to the zip archive:
 zip -r build/packages/package-${SHORT_SHA}.zip gen_ai_on_aws
+
+
+echo "Built package: build/packages/package-${SHORT_SHA}.zip"
