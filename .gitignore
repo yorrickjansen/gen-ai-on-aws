@@ -1,0 +1,7 @@
+*.pyc
+provisioning/venv/
+app/venv/
+
+app/build/
+
+
