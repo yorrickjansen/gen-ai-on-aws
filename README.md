@@ -53,13 +53,14 @@ http GET (pulumi stack output apigateway-rest-endpoint)"/hello"
 
 
 ## TODO
-[x] integrate uv and direnv
-[x] packaging of Lambda
-[x] pre commit config
-[ ] CI/CD with GH Actions
-[x] Lint, Type Checking (ruff), back
-[ ] Setup unit tests
-[x] Use FastAPI for app
-[ ] Choose an example of GenAI application
-[ ] Frontend?
-[ ] Progressive deployments with CodeDeploy
+
+- [x] integrate uv and direnv
+- [x] packaging of Lambda
+- [x] pre commit config
+- [ ] CI/CD with GH Actions
+- [x] Lint, Type Checking (ruff), back
+- [ ] Setup unit tests
+- [x] Use FastAPI for app
+- [ ] Choose an example of GenAI application
+- [ ] Frontend?
+- [ ] Progressive deployments with CodeDeploy
