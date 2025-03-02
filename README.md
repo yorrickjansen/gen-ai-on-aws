@@ -18,6 +18,18 @@ Dependencies at the root of the project aim to apply  consistent rules at repo l
 This project uses `uv` to manage dependencies.
 You also need Docker in order to package the code before deploying.
 
+```fish
+cd app
+uv sync
+```
+
+Optionally, you can install Aider for AI coding
+
+```fish
+uv tool install --force --python python3.12 aider-chat@latest
+uvx aider
+```
+
 
 ## Package and deploy code
 
@@ -41,13 +53,13 @@ http GET (pulumi stack output apigateway-rest-endpoint)"/hello"
 
 
 ## TODO
- - integrate uv and direnv
- - packaging of Lambda
- - pre commit config
- - CI/CD with GH Actions
- - Lint, Type Checking (ruff), back
- - Setup unit tests
- - Use FastAPI for app
- - Choose an example of GenAI application
- - Frontend?
- - Progressive deployments
+[x] integrate uv and direnv
+[x] packaging of Lambda
+[x] pre commit config
+[ ] CI/CD with GH Actions
+[x] Lint, Type Checking (ruff), back
+[ ] Setup unit tests
+[x] Use FastAPI for app
+[ ] Choose an example of GenAI application
+[ ] Frontend?
+[ ] Progressive deployments with CodeDeploy

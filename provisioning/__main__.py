@@ -1,11 +1,11 @@
 """An AWS Python Pulumi program"""
 
-import os
 import glob
+import os
+
 import iam
 import pulumi
 import pulumi_aws as aws
-from pulumi import Config
 
 region = aws.config.region
 config = pulumi.Config()
