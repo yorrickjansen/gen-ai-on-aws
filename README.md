@@ -59,8 +59,9 @@ http GET (pulumi stack output apigateway-rest-endpoint)"/hello"
 - [x] pre commit config
 - [ ] CI/CD with GH Actions
 - [x] Lint, Type Checking (ruff), back
-- [ ] Setup unit tests
 - [x] Use FastAPI for app
+- [ ] Make a first call to Bedrock
+- [ ] Setup unit tests
 - [ ] Choose an example of GenAI application
 - [ ] Frontend?
 - [ ] Progressive deployments with CodeDeploy

@@ -2,6 +2,7 @@
 
 import glob
 import os
+import time
 
 import iam
 import pulumi
@@ -37,6 +38,7 @@ lambda_func = aws.lambda_.Function(
     role=iam.lambda_role.arn,
     runtime="python3.13",
     handler="gen_ai_on_aws.main.handler",
+    timeout=30,
     code=code,
     # source_code_hash=TODO,
     environment={
