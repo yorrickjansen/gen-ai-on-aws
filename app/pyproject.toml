@@ -4,14 +4,19 @@ version = "0.1.0"
 description = "App code for GenAI on AWS"
 requires-python = ">=3.13"
 dependencies = [
+    "anthropic>=0.49.0",
+    "boto3>=1.37.5",
     # FastAPI is a modern web framework for building APIs with Python.
     "fastapi",
+    "instructor>=1.7.2",
     # Mangum is a library that adapts ASGI applications to AWS Lambda and API Gateway.
     "mangum",
 ]
 
 [dependency-groups]
 dev = [
+    "devtools>=0.12.2",
     # In development mode, include the FastAPI development server.
     "fastapi[standard]>=0.115",
+    "ipykernel>=6.29.5",
 ]

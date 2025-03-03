@@ -32,6 +32,11 @@ lambda_role_policy = iam.RolePolicy(
                 "logs:PutLogEvents"
             ],
             "Resource": "arn:aws:logs:*:*:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "bedrock:InvokeModel",
+            "Resource": "*"
         }]
     }""",
 )
