@@ -2,7 +2,6 @@
 
 import glob
 import os
-import time
 
 import iam
 import pulumi
@@ -39,11 +38,13 @@ lambda_func = aws.lambda_.Function(
     runtime="python3.13",
     handler="gen_ai_on_aws.main.handler",
     timeout=30,
+    memory_size=256,
     code=code,
     # source_code_hash=TODO,
     environment={
         "variables": {
             "APP_VERSION": app_version,
+            "MODEL": "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0",
         },
     },
 )
