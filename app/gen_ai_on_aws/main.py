@@ -9,10 +9,10 @@ from litellm import completion
 from mangum import Mangum
 from pydantic import BaseModel, Field
 
-# os.environ["LITELLM_LOG"] = "DEBUG"
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-# litellm._turn_on_debug()
+# TODO somehow this doesn't work
+# logging.getLogger("litellm").setLevel(logging.WARNING)
 
 
 MODEL = os.getenv("MODEL", "anthropic/claude-3-5-sonnet-20241022")
