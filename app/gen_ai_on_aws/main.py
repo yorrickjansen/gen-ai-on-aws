@@ -1,11 +1,11 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Optional
 
-from anthropic import AnthropicBedrock
-import instructor
 from fastapi import FastAPI
 from mangum import Mangum
 from pydantic import BaseModel, Field
+from litellm import completion
+import instructor
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -13,9 +13,8 @@ logger.setLevel(logging.INFO)
 app = FastAPI()
 handler = Mangum(app)
 
-
-# Patching the Anthropics client with the instructor for enhanced capabilities
-client = instructor.from_anthropic(AnthropicBedrock())
+# Create instructor client using litellm
+client = instructor.from_litellm(completion)
 
 
 class User(BaseModel):
@@ -33,10 +32,8 @@ async def root() -> str:
 async def extract_user(text: str) -> User:
     # text = "My name is John Doe, I am 30 years old, and I don't have an email address."
 
-    user_response = client.chat.completions.create(
-        model="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-        max_tokens=1024,
-        max_retries=0,
+    response = client.chat.completions.create(
+        model="bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0",  # Updated model name for litellm format
         messages=[
             {
                 "role": "user",
@@ -45,4 +42,4 @@ async def extract_user(text: str) -> User:
         ],
         response_model=User,
     )
-    return user_response
+    return response
