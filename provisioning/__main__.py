@@ -1,5 +1,3 @@
-"""An AWS Python Pulumi program"""
-
 import glob
 import os
 
@@ -18,7 +16,9 @@ custom_stage_name = "example"
 # Create a Lambda function, using code from the `./app` folder.
 
 # pulumi up -c APP_VERSION=latest
-app_version = config.require("APP_VERSION")
+app_version = config.require("app_version")
+anthropic_api_key = config.require("anthropic_api_key")
+model_name = config.require("model_name")
 
 
 if app_version == "latest":
@@ -30,6 +30,20 @@ if app_version == "latest":
 else:
     print(f"Using app version: {app_version}")
     code = pulumi.FileArchive(f"../app/build/packages/package-{app_version}.zip")
+
+
+# create Secret in Secrets Manager
+anthropic_api_key_secret = aws.secretsmanager.Secret(
+    "anthropic-api-key",
+    name="anthropic-api-key",
+    description="API Key for Anthropic",
+)
+
+anthropic_api_key_secret_version = aws.secretsmanager.SecretVersion(
+    "anthropic-api-key-version",
+    secret_id=anthropic_api_key_secret.id,
+    secret_string=anthropic_api_key,
+)
 
 
 lambda_func = aws.lambda_.Function(
@@ -44,7 +58,9 @@ lambda_func = aws.lambda_.Function(
     environment={
         "variables": {
             "APP_VERSION": app_version,
-            "MODEL": "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            # "MODEL": "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "MODEL": model_name,
+            "ANTHROPIC_API_KEY_SECRET_NAME": anthropic_api_key_secret.name,
         },
     },
 )

@@ -37,6 +37,13 @@ lambda_role_policy = iam.RolePolicy(
             "Effect": "Allow",
             "Action": "bedrock:InvokeModel",
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue"
+            ],
+            "Resource": "arn:aws:secretsmanager:*:*:secret:anthropic-api-key-*"
         }]
     }""",
 )

@@ -6,4 +6,5 @@ runtime:
     virtualenv: .venv
 description: Generative AI on AWS
 config:
-  APP_VERSION: latest
+  app_version: latest
+  model_name: anthropic/claude-3-5-sonnet-20241022
