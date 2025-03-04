@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from gen_ai_on_aws.main import app, User
+from gen_ai_on_aws.main import User, app
 
 client = TestClient(app)
 
@@ -35,3 +35,15 @@ def test_extract_user():
     assert user.name == "Jane Doe"
     assert user.age == 25
     assert user.email is None
+
+
+def test_extract_user_failure():
+    # Test with text that doesn't contain any user information
+    test_text = "This is a random text without any user information"
+    response = client.post("/extract-user", json={"text": test_text})
+
+    # Since the LLM might try to hallucinate values, we should check that
+    # the response at least contains valid User model fields
+    assert response.status_code == 200
+    data = response.json()
+    assert data is None
