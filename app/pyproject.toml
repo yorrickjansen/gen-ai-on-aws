@@ -19,5 +19,12 @@ dev = [
     "devtools>=0.12.2",
     # In development mode, include the FastAPI development server.
     "fastapi[standard]>=0.115",
+    "httpx>=0.28.1",
     "ipykernel>=6.29.5",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.25.3",
+    "pytest-cov>=5.0.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
