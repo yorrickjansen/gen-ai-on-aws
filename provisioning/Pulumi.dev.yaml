@@ -1,3 +1,5 @@
 config:
   pulumi:template: https://github.com/pulumi/examples/tree/master/aws-py-apigateway-lambda-serverless
   aws:region: us-east-1
+  gen-ai-on-aws:anthropic_api_key:
+    secure: AAABAK3B2mNFTtyg4FPUgIuyZ2WuJH2kgDB2gWusI3FnDyJsBkCFzqgXczxVSQ0R8e2Yx/q3r6xDCh6Y4ZCCLOITaIdy+nEPOp2ESQ/8Lq/sNDdpcsQ4t+dnnO6TWWXQ31lx6HejLpDamaqLHQjMkSMzAfJ/jo6zzmSD1JIv0S0lKrzVKLnjjTGzpns=

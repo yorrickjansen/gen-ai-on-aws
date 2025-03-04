@@ -2,12 +2,13 @@ import logging
 import os
 from typing import Optional
 
+import boto3
 import instructor
+import litellm
 from fastapi import FastAPI
 from litellm import completion
 from mangum import Mangum
 from pydantic import BaseModel, Field
-import litellm
 
 os.environ["LITELLM_LOG"] = "DEBUG"
 logger = logging.getLogger()
@@ -16,6 +17,27 @@ litellm._turn_on_debug()
 
 
 MODEL = os.environ["MODEL"]
+
+
+def get_anthropic_api_key():
+    if not MODEL.startswith("anthropic/"):
+        return None
+
+    secret_name = os.environ["ANTHROPIC_API_KEY_SECRET_NAME"]
+    session = boto3.session.Session()
+    client = session.client(service_name="secretsmanager")
+
+    try:
+        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+    except Exception as e:
+        logger.error(f"Error fetching secret: {e}")
+        raise
+
+    return get_secret_value_response["SecretString"]
+
+
+if anthropic_api_key := get_anthropic_api_key():
+    os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
 
 
 app = FastAPI()
