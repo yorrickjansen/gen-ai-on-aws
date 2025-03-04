@@ -4,7 +4,6 @@ from typing import Optional
 
 import boto3
 import instructor
-import litellm
 from fastapi import FastAPI
 from litellm import completion
 from mangum import Mangum
@@ -63,18 +62,22 @@ async def root() -> str:
 
 
 @app.post("/extract-user")
-async def extract_user(request: ExtractUserRequest) -> User:
-    print(f"Extracting user from text: {request.text}")
+async def extract_user(request: ExtractUserRequest) -> User | None:
+    logger.info(f"Extracting user from text: {request.text}")
 
     response = client.chat.completions.create(
         model=MODEL,
         messages=[
             {
+                "role": "system",
+                "content": "Extract user information from the provided text. If no valid user information is found, return None. Only extract information if you're confident about the values.",
+            },
+            {
                 "role": "user",
                 "content": request.text,
-            }
+            },
         ],
-        response_model=User,
+        response_model=Optional[User],
     )
     return response
 
