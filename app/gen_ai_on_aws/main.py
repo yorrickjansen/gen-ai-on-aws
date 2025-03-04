@@ -1,14 +1,22 @@
 import logging
+import os
 from typing import Optional
 
+import instructor
 from fastapi import FastAPI
+from litellm import completion
 from mangum import Mangum
 from pydantic import BaseModel, Field
-from litellm import completion
-import instructor
+import litellm
 
+os.environ["LITELLM_LOG"] = "DEBUG"
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+litellm._turn_on_debug()
+
+
+MODEL = os.environ["MODEL"]
+
 
 app = FastAPI()
 handler = Mangum(app)
@@ -33,7 +41,7 @@ async def extract_user(text: str) -> User:
     # text = "My name is John Doe, I am 30 years old, and I don't have an email address."
 
     response = client.chat.completions.create(
-        model="bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0",  # Updated model name for litellm format
+        model=MODEL,
         messages=[
             {
                 "role": "user",
