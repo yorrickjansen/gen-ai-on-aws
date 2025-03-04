@@ -51,6 +51,26 @@ Test endpoint
 http GET (pulumi stack output apigateway-rest-endpoint)"/hello"
 ```
 
+## Running Tests
+
+To run the unit tests:
+
+```fish
+cd app
+uv run pytest
+```
+
+For more verbose output, use:
+
+```fish
+uv run pytest -v
+```
+
+To see test coverage:
+
+```fish
+uv run pytest --cov=gen_ai_on_aws
+```
 
 ## TODO
 

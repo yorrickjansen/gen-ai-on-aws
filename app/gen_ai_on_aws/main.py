@@ -16,14 +16,14 @@ logger.setLevel(logging.DEBUG)
 litellm._turn_on_debug()
 
 
-MODEL = os.environ["MODEL"]
+MODEL = os.getenv("MODEL", "anthropic/claude-3-5-sonnet-20241022")
 
 
 def get_anthropic_api_key():
     if not MODEL.startswith("anthropic/"):
         return None
 
-    secret_name = os.environ["ANTHROPIC_API_KEY_SECRET_NAME"]
+    secret_name = os.getenv("ANTHROPIC_API_KEY_SECRET_NAME", "anthropic-api-key")
     session = boto3.session.Session()
     client = session.client(service_name="secretsmanager")
 
@@ -73,3 +73,6 @@ async def extract_user(text: str) -> User:
         response_model=User,
     )
     return response
+
+
+# app/gen_ai_on_aws/__init__.py
