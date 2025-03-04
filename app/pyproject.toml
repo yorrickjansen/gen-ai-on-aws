@@ -9,6 +9,7 @@ dependencies = [
     # FastAPI is a modern web framework for building APIs with Python.
     "fastapi",
     "instructor>=1.7.2",
+    "litellm>=1.62.1",
     # Mangum is a library that adapts ASGI applications to AWS Lambda and API Gateway.
     "mangum",
 ]
