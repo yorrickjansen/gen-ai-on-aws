@@ -2,15 +2,16 @@ import logging
 import os
 from typing import Optional
 
-import boto3
 import instructor
+import litellm
 from fastapi import FastAPI
+from gen_ai_on_aws.config import get_anthropic_api_key, get_langfuse_config
+from gen_ai_on_aws.types import ExtractUserRequest, User
 from litellm import completion
 from mangum import Mangum
-from pydantic import BaseModel, Field
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 # TODO somehow this doesn't work
 # logging.getLogger("litellm").setLevel(logging.WARNING)
 
@@ -18,25 +19,18 @@ logger.setLevel(logging.INFO)
 MODEL = os.getenv("MODEL", "anthropic/claude-3-5-sonnet-20241022")
 
 
-def get_anthropic_api_key():
-    if not MODEL.startswith("anthropic/"):
-        return None
-
-    secret_name = os.getenv("ANTHROPIC_API_KEY_SECRET_NAME", "anthropic-api-key")
-    session = boto3.session.Session()
-    client = session.client(service_name="secretsmanager")
-
-    try:
-        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
-    except Exception as e:
-        logger.error(f"Error fetching secret: {e}")
-        raise
-
-    return get_secret_value_response["SecretString"]
-
-
-if anthropic_api_key := get_anthropic_api_key():
+if anthropic_api_key := get_anthropic_api_key(model=MODEL):
     os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
+
+
+if langfuse_config := get_langfuse_config():
+    os.environ["LANGFUSE_PUBLIC_KEY"] = langfuse_config.public_key
+    os.environ["LANGFUSE_SECRET_KEY"] = langfuse_config.secret_key
+    os.environ["LANGFUSE_HOST"] = langfuse_config.host
+
+
+litellm.success_callback = ["langfuse"]
+litellm.failure_callback = ["langfuse"]
 
 
 app = FastAPI()
@@ -44,16 +38,6 @@ handler = Mangum(app)
 
 # Create instructor client using litellm
 client = instructor.from_litellm(completion)
-
-
-class User(BaseModel):
-    name: str = Field(description="The name of the user.")
-    age: int = Field(description="The age of the user.")
-    email: Optional[str] = Field(description="The email of the user.", default=None)
-
-
-class ExtractUserRequest(BaseModel):
-    text: str = Field(description="The text to extract user information from.")
 
 
 @app.get("/hello")
