@@ -80,8 +80,9 @@ uv run pytest --cov=gen_ai_on_aws
 - [ ] CI/CD with GH Actions
 - [x] Lint, Type Checking (ruff), back
 - [x] Use FastAPI for app
-- [ ] Make a first call to Bedrock
-- [ ] Setup unit tests
+- [x] Make a first call to Bedrock / Anthropic
+- [x] Setup unit tests
+- [ ] Add lang
 - [ ] Choose an example of GenAI application
 - [ ] Frontend?
 - [ ] Progressive deployments with CodeDeploy
