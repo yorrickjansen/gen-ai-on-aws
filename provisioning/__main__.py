@@ -1,5 +1,6 @@
 import glob
 import os
+import json
 
 import iam
 import pulumi
@@ -17,7 +18,6 @@ custom_stage_name = "example"
 
 # pulumi up -c APP_VERSION=latest
 app_version = config.require("app_version")
-anthropic_api_key = config.require("anthropic_api_key")
 model_name = config.require("model_name")
 
 
@@ -32,20 +32,6 @@ else:
     code = pulumi.FileArchive(f"../app/build/packages/package-{app_version}.zip")
 
 
-# create Secret in Secrets Manager
-anthropic_api_key_secret = aws.secretsmanager.Secret(
-    "anthropic-api-key",
-    name="anthropic-api-key",
-    description="API Key for Anthropic",
-)
-
-anthropic_api_key_secret_version = aws.secretsmanager.SecretVersion(
-    "anthropic-api-key-version",
-    secret_id=anthropic_api_key_secret.id,
-    secret_string=anthropic_api_key,
-)
-
-
 lambda_func = aws.lambda_.Function(
     "app",
     role=iam.lambda_role.arn,
@@ -58,9 +44,17 @@ lambda_func = aws.lambda_.Function(
     environment={
         "variables": {
             "APP_VERSION": app_version,
-            # "MODEL": "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0",
             "MODEL": model_name,
-            "ANTHROPIC_API_KEY_SECRET_NAME": anthropic_api_key_secret.name,
+            "ANTHROPIC_API_KEY_SECRET_NAME": config.require(
+                "anthropic_api_key_secret_name"
+            ),
+            "LANGFUSE_PUBLIC_KEY_SECRET_NAME": config.require(
+                "langfuse_public_key_secret_name"
+            ),
+            "LANGFUSE_SECRET_KEY_SECRET_NAME": config.require(
+                "langfuse_secret_key_secret_name"
+            ),
+            "LANGFUSE_HOST": config.require("langfuse_host"),
         },
     },
 )
@@ -190,3 +184,4 @@ pulumi.export(
         lambda values: values[0] + "/" + values[1] + "/"
     ),
 )
+pulumi.export("lambda_function_name", lambda_func.name)
