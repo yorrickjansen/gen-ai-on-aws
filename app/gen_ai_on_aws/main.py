@@ -23,14 +23,15 @@ if anthropic_api_key := get_anthropic_api_key(model=MODEL):
     os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
 
 
-if langfuse_config := get_langfuse_config():
-    os.environ["LANGFUSE_PUBLIC_KEY"] = langfuse_config.public_key
-    os.environ["LANGFUSE_SECRET_KEY"] = langfuse_config.secret_key
-    os.environ["LANGFUSE_HOST"] = langfuse_config.host
+# configure langfuse is running inside AWS Lambda
+if os.environ.get("AWS_EXECUTION_ENV") is not None:
+    if langfuse_config := get_langfuse_config():
+        os.environ["LANGFUSE_PUBLIC_KEY"] = langfuse_config.public_key
+        os.environ["LANGFUSE_SECRET_KEY"] = langfuse_config.secret_key
+        os.environ["LANGFUSE_HOST"] = langfuse_config.host
 
-
-litellm.success_callback = ["langfuse"]
-litellm.failure_callback = ["langfuse"]
+        litellm.success_callback = ["langfuse"]
+        litellm.failure_callback = ["langfuse"]
 
 
 app = FastAPI()
