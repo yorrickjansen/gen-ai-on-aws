@@ -6,8 +6,12 @@ SHORT_SHA=$(git rev-parse --short HEAD)
 # Check if there are any changes in the current directory
 if git status --porcelain . | grep -q .; then
     # Append _SNAPSHOT suffix if changes are detected
-    SHORT_SHA="${SHORT_SHA}_SNAPSHOT"
+    SHORT_SHA="${SHORT_SHA}-SNAPSHOT"
 fi
+
+# Create version.py with current version
+mkdir -p gen_ai_on_aws
+echo "VERSION = \"${SHORT_SHA}\"" > gen_ai_on_aws/version.py
 
 
 uv export --frozen --no-dev --no-editable -o "build/requirements-${SHORT_SHA}.txt"
@@ -27,5 +31,7 @@ cd ../../..
 # Finally, we can add the application code to the zip archive:
 zip -qr build/packages/package-${SHORT_SHA}.zip gen_ai_on_aws
 
+# Clean up the temporary version file
+rm gen_ai_on_aws/version.py
 
 echo "Built package: ./build/packages/package-${SHORT_SHA}.zip"

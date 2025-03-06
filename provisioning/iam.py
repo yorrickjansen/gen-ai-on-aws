@@ -1,8 +1,6 @@
 # Copyright 2016-2018, Pulumi Corporation.  All rights reserved.
 
 from pulumi_aws import iam
-import pulumi
-
 
 lambda_role = iam.Role(
     "lambdaRole",
@@ -50,6 +48,7 @@ lambda_role_policy = iam.RolePolicy(
                 "arn:aws:secretsmanager:*:*:secret:gen-ai-on-aws/*",
                 "arn:aws:secretsmanager:*:*:secret:gen-ai-on-aws/*"
             ]
-        }]
+        } 
+        ]
     }""",
 )

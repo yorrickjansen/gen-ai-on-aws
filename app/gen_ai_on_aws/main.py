@@ -7,6 +7,7 @@ import litellm
 from fastapi import FastAPI
 from gen_ai_on_aws.config import get_anthropic_api_key, get_langfuse_config
 from gen_ai_on_aws.types import ExtractUserRequest, User
+from langfuse.decorators import langfuse_context, observe
 from litellm import completion
 from mangum import Mangum
 
@@ -14,6 +15,12 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 # TODO somehow this doesn't work
 # logging.getLogger("litellm").setLevel(logging.WARNING)
+
+
+try:
+    from gen_ai_on_aws.version import VERSION
+except ImportError:
+    VERSION = "local"
 
 
 MODEL = os.getenv("MODEL", "anthropic/claude-3-5-sonnet-20241022")
@@ -47,8 +54,10 @@ async def root() -> str:
 
 
 @app.post("/extract-user")
+@observe
 async def extract_user(request: ExtractUserRequest) -> User | None:
     logger.info(f"Extracting user from text: {request.text}")
+    langfuse_context.update_current_trace(metadata={"app_version": VERSION})
 
     response = client.chat.completions.create(
         model=MODEL,
@@ -63,8 +72,10 @@ async def extract_user(request: ExtractUserRequest) -> User | None:
             },
         ],
         response_model=Optional[User],
+        # https://langfuse.com/docs/integrations/litellm/tracing#use-within-decorated-function
+        metadata={
+            "existing_trace_id": langfuse_context.get_current_trace_id(),  # set langfuse trace ID
+            "parent_observation_id": langfuse_context.get_current_observation_id(),
+        },
     )
     return response
-
-
-# app/gen_ai_on_aws/__init__.py
