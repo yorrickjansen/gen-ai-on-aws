@@ -1,6 +1,5 @@
 import glob
 import os
-import json
 
 import iam
 import pulumi

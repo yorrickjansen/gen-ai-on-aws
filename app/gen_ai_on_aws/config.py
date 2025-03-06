@@ -1,9 +1,8 @@
+import json
 import logging
 import os
-import json
 
 import boto3
-
 from gen_ai_on_aws.types import LangFuseConfig
 
 logger = logging.getLogger()

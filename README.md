@@ -82,7 +82,8 @@ uv run pytest --cov=gen_ai_on_aws
 - [x] Use FastAPI for app
 - [x] Make a first call to Bedrock / Anthropic
 - [x] Setup unit tests
-- [ ] Add lang
-- [ ] Choose an example of GenAI application
+- [x] Add langfuse
+- [ ] Add more info in langfuse traving, such as xray trace id, app version
+- [ ] Choose an example of GenAI application => see Claude suggestions
 - [ ] Frontend?
 - [ ] Progressive deployments with CodeDeploy
