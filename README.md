@@ -70,7 +70,7 @@ uv run pulumi up -y
 Call API
 
 ```fish
-http POST $(pulumi stack output apigateway-rest-endpoint)"/extract-user" text="My name is Bob, I am 40 years old"
+http POST $(pulumi stack output apigateway-rest-endpoint)"/examples/extract-user" text="My name is Bob, I am 40 years old"
 ```
 
 Look at the logs of Lambda function
@@ -101,7 +101,7 @@ uv run fastapi run gen_ai_on_aws/main.py --reload
 Test API
 
 ```fish
-http POST http://0.0.0.0:8000/extract-user text="My name is Bob, I am 40 years old, bb@gmail.com"
+http POST http://0.0.0.0:8000/examples/extract-user text="My name is Bob, I am 40 years old, bb@gmail.com"
 ```
 
 ### Running Unit Tests
