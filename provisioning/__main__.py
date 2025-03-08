@@ -148,7 +148,6 @@ url = http_lambda_backend.integration_uri
 
 http_route = aws.apigatewayv2.Route(
     "proxy-route",
-    name=f"{stack_name}_gen-ai-on-aws",
     api_id=http_endpoint.id,
     route_key="ANY /{proxy+}",
     target=http_lambda_backend.id.apply(lambda targetUrl: "integrations/" + targetUrl),
