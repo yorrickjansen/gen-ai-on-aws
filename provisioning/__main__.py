@@ -104,7 +104,6 @@ rest_api = aws.apigateway.RestApi(
 # Create a deployment of the Rest API.
 deployment = aws.apigateway.Deployment(
     "api-deployment",
-    name=f"{stack_name}_gen-ai-on-aws",
     rest_api=rest_api.id,
 )
 
