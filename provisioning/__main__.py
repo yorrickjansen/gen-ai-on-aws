@@ -5,7 +5,7 @@ import iam
 import pulumi
 import pulumi_aws as aws
 
-region = aws.config.region
+region = os.environ.get("AWS_DEFAULT_REGION")
 config = pulumi.Config()
 custom_stage_name = "example"
 
@@ -48,15 +48,12 @@ lambda_func = aws.lambda_.Function(
         "variables": {
             "APP_VERSION": app_version,
             "MODEL": model_name,
-            "ANTHROPIC_API_KEY_SECRET_NAME": config.require(
-                "anthropic_api_key_secret_name"
-            ),
-            "LANGFUSE_PUBLIC_KEY_SECRET_NAME": config.require(
-                "langfuse_public_key_secret_name"
-            ),
-            "LANGFUSE_SECRET_KEY_SECRET_NAME": config.require(
-                "langfuse_secret_key_secret_name"
-            ),
+            "ANTHROPIC_API_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
+            + config.require("anthropic_api_key_secret_name"),
+            "LANGFUSE_PUBLIC_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
+            + config.require("langfuse_public_key_secret_name"),
+            "LANGFUSE_SECRET_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
+            + config.require("langfuse_secret_key_secret_name"),
             "LANGFUSE_HOST": config.require("langfuse_host"),
         },
     },

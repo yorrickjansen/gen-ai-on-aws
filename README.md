@@ -39,9 +39,25 @@ cd app
 
  ```fish
 cd provisioning
-pulumi login --local  ## stores state files on local disk under $HOME directory, but you can also store it on S3 / Pulumi Cloud
+uv run pulumi login --local  ## stores state files on local disk under $HOME directory, but you can also store it on S3 / Pulumi Cloud
+export PULUMI_CONFIG_PASSPHRASE=""  # encrypts secrets in state file, should not be empty
+export AWS_DEFAULT_REGION=us-east-1  # choose where you want to deploy
+uv run pulumi stack init demo  # creates a "demo" stack, you can create as many instances of stacks as you want
+```
 
- ```
+Then, add your AWS credentials in environment variables (to simplofy things, those credentials should be one attached to a role / user that has admin level credentials)
+
+```fish
+export AWS_ACCESS_KEY_ID="ASIAxxx"
+export AWS_SECRET_ACCESS_KEY="xxx"
+export AWS_SESSION_TOKEN="xxx"
+```
+
+```fish
+
+```
+
+
 
 ## Installation
 

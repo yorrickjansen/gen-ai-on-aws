@@ -1,7 +1,0 @@
-config:
-  pulumi:template: https://github.com/pulumi/examples/tree/master/aws-py-apigateway-lambda-serverless
-  aws:region: us-east-1
-  gen-ai-on-aws:anthropic_api_key_secret_name: gen-ai-on-aws/dev/anthropic_api_key
-  gen-ai-on-aws:langfuse_public_key_secret_name: gen-ai-on-aws/dev/langfuse_public_key
-  gen-ai-on-aws:langfuse_secret_key_secret_name: gen-ai-on-aws/dev/langfuse_secret_key
-  gen-ai-on-aws:langfuse_host: https://us.cloud.langfuse.com
