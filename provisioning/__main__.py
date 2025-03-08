@@ -31,8 +31,12 @@ else:
     code = pulumi.FileArchive(f"../app/build/packages/package-{app_version}.zip")
 
 
+stack_name = pulumi.get_stack()
+
+
 lambda_func = aws.lambda_.Function(
     "app",
+    name=f"{stack_name}_gen-ai-on-aws",
     role=iam.lambda_role.arn,
     runtime="python3.13",
     handler="gen_ai_on_aws.main.handler",
@@ -88,6 +92,7 @@ def swagger_route_handler(arn):
 # Create the API Gateway Rest API, using a swagger spec.
 rest_api = aws.apigateway.RestApi(
     "api",
+    name=f"{stack_name}_gen-ai-on-aws",
     body=pulumi.Output.json_dumps(
         {
             "swagger": "2.0",
@@ -102,12 +107,14 @@ rest_api = aws.apigateway.RestApi(
 # Create a deployment of the Rest API.
 deployment = aws.apigateway.Deployment(
     "api-deployment",
+    name=f"{stack_name}_gen-ai-on-aws",
     rest_api=rest_api.id,
 )
 
 # Create a stage, which is an addressable instance of the Rest API. Set it to point at the latest deployment.
 stage = aws.apigateway.Stage(
     "api-stage",
+    name=f"{stack_name}_gen-ai-on-aws",
     rest_api=rest_api.id,
     deployment=deployment.id,
     stage_name=custom_stage_name,
@@ -116,6 +123,7 @@ stage = aws.apigateway.Stage(
 # Give permissions from API Gateway to invoke the Lambda
 rest_invoke_permission = aws.lambda_.Permission(
     "api-rest-lambda-permission",
+    name=f"{stack_name}_gen-ai-on-aws",
     action="lambda:invokeFunction",
     function=lambda_func.name,
     principal="apigateway.amazonaws.com",
@@ -128,10 +136,13 @@ rest_invoke_permission = aws.lambda_.Permission(
 ##
 #########################################################################
 
-http_endpoint = aws.apigatewayv2.Api("http-api-pulumi-example", protocol_type="HTTP")
+http_endpoint = aws.apigatewayv2.Api(
+    "api-endpoint", name=f"{stack_name}_gen-ai-on-aws", protocol_type="HTTP"
+)
 
 http_lambda_backend = aws.apigatewayv2.Integration(
     "lambda_integration",
+    name=f"{stack_name}_gen-ai-on-aws",
     api_id=http_endpoint.id,
     integration_type="AWS_PROXY",
     connection_type="INTERNET",
@@ -144,6 +155,7 @@ url = http_lambda_backend.integration_uri
 
 http_route = aws.apigatewayv2.Route(
     "proxy-route",
+    name=f"{stack_name}_gen-ai-on-aws",
     api_id=http_endpoint.id,
     route_key="ANY /{proxy+}",
     target=http_lambda_backend.id.apply(lambda targetUrl: "integrations/" + targetUrl),
@@ -151,6 +163,7 @@ http_route = aws.apigatewayv2.Route(
 
 http_stage = aws.apigatewayv2.Stage(
     "stage",
+    name=f"{stack_name}_gen-ai-on-aws",
     api_id=http_endpoint.id,
     route_settings=[
         {
@@ -165,6 +178,7 @@ http_stage = aws.apigatewayv2.Stage(
 # Give permissions from API Gateway to invoke the Lambda
 http_invoke_permission = aws.lambda_.Permission(
     "api-http-lambda-permission",
+    name=f"{stack_name}_gen-ai-on-aws",
     action="lambda:invokeFunction",
     function=lambda_func.name,
     principal="apigateway.amazonaws.com",
@@ -176,11 +190,10 @@ pulumi.export(
     "apigateway-rest-endpoint",
     deployment.invoke_url.apply(lambda url: url + custom_stage_name),
 )
-# See "Outputs" for (Inputs and Outputs)[https://www.pulumi.com/docs/intro/concepts/inputs-outputs/] the usage of the pulumi.Output.all function to do string concatenation
-pulumi.export(
-    "apigatewayv2-http-endpoint",
-    pulumi.Output.all(http_endpoint.api_endpoint, http_stage.name).apply(
-        lambda values: values[0] + "/" + values[1] + "/"
-    ),
-)
+# pulumi.export(
+#     "apigatewayv2-http-endpoint",
+#     pulumi.Output.all(http_endpoint.api_endpoint, http_stage.name).apply(
+#         lambda values: values[0] + "/" + values[1] + "/"
+#     ),
+# )
 pulumi.export("lambda_function_name", lambda_func.name)
