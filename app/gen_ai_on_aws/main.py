@@ -1,5 +1,6 @@
 import logging
 import os
+from re import S
 from typing import Optional
 
 import instructor
@@ -24,15 +25,16 @@ except ImportError:
 
 
 MODEL = os.getenv("MODEL", "anthropic/claude-3-5-sonnet-20241022")
+STACK_NAME = os.environ["STACK_NAME"]
 
 
-if anthropic_api_key := get_anthropic_api_key(model=MODEL):
+if anthropic_api_key := get_anthropic_api_key(stack_name=STACK_NAME):
     os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
 
 
 # configure langfuse is running inside AWS Lambda
 if os.environ.get("AWS_EXECUTION_ENV") is not None:
-    if langfuse_config := get_langfuse_config():
+    if langfuse_config := get_langfuse_config(stack_name=STACK_NAME):
         os.environ["LANGFUSE_PUBLIC_KEY"] = langfuse_config.public_key
         os.environ["LANGFUSE_SECRET_KEY"] = langfuse_config.secret_key
         os.environ["LANGFUSE_HOST"] = langfuse_config.host
