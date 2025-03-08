@@ -6,3 +6,6 @@ app/build/
 
 
 .aider*
+
+.coverage
+htmlcov

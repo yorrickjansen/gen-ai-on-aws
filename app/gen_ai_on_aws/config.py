@@ -11,9 +11,10 @@ session = boto3.session.Session()
 client = session.client(service_name="secretsmanager")
 
 
-def get_anthropic_api_key(model) -> str:
+def get_anthropic_api_key(stack_name: str) -> str:
+    logger.info(f"Fetching API key for stack: {stack_name}")
     secret_name = os.getenv(
-        "ANTHROPIC_API_KEY_SECRET_NAME", "gen-ai-on-aws/dev/anthropic_api_key"
+        "ANTHROPIC_API_KEY_SECRET_NAME", f"gen-ai-on-aws/{stack_name}/anthropic_api_key"
     )
 
     try:
@@ -25,12 +26,14 @@ def get_anthropic_api_key(model) -> str:
     return json.loads(get_secret_value_response["SecretString"])["key"]
 
 
-def get_langfuse_config() -> LangFuseConfig | None:
+def get_langfuse_config(stack_name: str) -> LangFuseConfig | None:
     public_key_secret = os.getenv(
-        "LANGFUSE_PUBLIC_KEY_SECRET_NAME", "gen-ai-on-aws/dev/langfuse_public_key"
+        "LANGFUSE_PUBLIC_KEY_SECRET_NAME",
+        f"gen-ai-on-aws/{stack_name}/langfuse_public_key",
     )
     secret_key_secret = os.getenv(
-        "LANGFUSE_SECRET_KEY_SECRET_NAME", "gen-ai-on-aws/dev/langfuse_secret_key"
+        "LANGFUSE_SECRET_KEY_SECRET_NAME",
+        f"gen-ai-on-aws/{stack_name}/langfuse_secret_key",
     )
     host = os.getenv("LANGFUSE_HOST", "https://us.cloud.langfuse.com")
 
