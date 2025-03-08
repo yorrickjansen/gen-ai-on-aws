@@ -170,7 +170,6 @@ http_stage = aws.apigatewayv2.Stage(
 # Give permissions from API Gateway to invoke the Lambda
 http_invoke_permission = aws.lambda_.Permission(
     "api-http-lambda-permission",
-    name=f"{stack_name}_gen-ai-on-aws",
     action="lambda:invokeFunction",
     function=lambda_func.name,
     principal="apigateway.amazonaws.com",
