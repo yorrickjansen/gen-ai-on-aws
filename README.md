@@ -95,7 +95,7 @@ Run FastAPI server in local
 
 ```fish
 cd app
-uv run fastapi run gen_ai_on_aws/main.py
+uv run fastapi run gen_ai_on_aws/main.py --reload
 ```
 
 Test API

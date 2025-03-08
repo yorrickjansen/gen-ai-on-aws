@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
-from gen_ai_on_aws.main import User, app
+from gen_ai_on_aws.main import app
+from gen_ai_on_aws.examples.types import User
+
 
 client = TestClient(app)
 
