@@ -110,7 +110,6 @@ deployment = aws.apigateway.Deployment(
 # Create a stage, which is an addressable instance of the Rest API. Set it to point at the latest deployment.
 stage = aws.apigateway.Stage(
     "api-stage",
-    name=f"{stack_name}_gen-ai-on-aws",
     rest_api=rest_api.id,
     deployment=deployment.id,
     stage_name=custom_stage_name,
