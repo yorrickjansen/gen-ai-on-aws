@@ -127,8 +127,10 @@ uv run pytest --cov=gen_ai_on_aws; and uv run coverage html; and open htmlcov/in
 
 ## TODO
 
-- [ ] Add tag to all pulumi resources
 - [ ] Architecture Diagram
+- [ ] Add FastAPI routers
+- [ ] Monitoring, alarms
+- [ ] Add tag to all pulumi resources
 - [ ] CI/CD with GH Actions
 - [ ] Progressive deployments with CodeDeploy
 - [x] integrate uv and direnv
@@ -138,11 +140,10 @@ uv run pytest --cov=gen_ai_on_aws; and uv run coverage html; and open htmlcov/in
 - [x] Use FastAPI for app
 - [x] Make a first call to Bedrock / Anthropic
 - [x] Setup unit tests
-- [x] Add langfuse
+- [x] Add langfuse tracing
 - [ ] Add more info in langfuse tracing, such as xray trace id, app version
 - [ ] Add SQS queue and worker
 - [ ] Add aurora Postgres for RAG
-- [ ] Monitoring
 - [ ] Push response / result using a websocket
 - [ ] What frontend to illustrate demo?
 - [ ] Demo of LLM chain / patterns
