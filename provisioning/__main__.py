@@ -48,6 +48,7 @@ lambda_func = aws.lambda_.Function(
         "variables": {
             "APP_VERSION": app_version,
             "MODEL": model_name,
+            "STACK_NAME": stack_name,
             "ANTHROPIC_API_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
             + config.require("anthropic_api_key_secret_name"),
             "LANGFUSE_PUBLIC_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"

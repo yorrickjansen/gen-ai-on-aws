@@ -42,7 +42,8 @@ cd provisioning
 uv run pulumi login --local  ## stores state files on local disk under $HOME directory, but you can also store it on S3 / Pulumi Cloud
 export PULUMI_CONFIG_PASSPHRASE=""  # encrypts secrets in state file, should not be empty
 export AWS_DEFAULT_REGION=us-east-1  # choose where you want to deploy
-uv run pulumi stack init demo  # creates a "demo" stack, you can create as many instances of stacks as you want
+export PULUMI_STACK=demo
+uv run pulumi stack init $PULUMI_STACK  # creates a "demo" stack, you can create as many instances of stacks as you want
 ```
 
 Then, add your AWS credentials in environment variables (to simplofy things, those credentials should be one attached to a role / user that has admin level credentials)
@@ -53,10 +54,32 @@ export AWS_SECRET_ACCESS_KEY="xxx"
 export AWS_SESSION_TOKEN="xxx"
 ```
 
-```fish
+Store the Anthropic and Langfuse cloud secrets in AWS secrets manager so keys stay secure inside AWS, and code fetch them on demand at runtime:
 
+```fish
+aws secretsmanager create-secret --secret-string '{"key": "sk-ant-xxx"}' --name "gen-ai-on-aws/$PULUMI_STACK/anthropic_api_key"
+# TODO
+aws secretsmanager create-secret --secret-string '{"key": "pk-lf-xxx"}' --name "gen-ai-on-aws/$PULUMI_STACK/langfuse_public_key"
+aws secretsmanager create-secret --secret-string '{"key": "sk-lf-xxx"}' --name 'gen-ai-on-aws/$PULUMI_STACK/langfuse_secret_key'
 ```
 
+Create resources
+
+```fish
+uv run pulumi up -y
+````
+
+Call API
+
+```fish
+http POST $(pulumi stack output apigateway-rest-endpoint)"/extract-user" text="My name is Bob, I am 40 years old"
+```
+
+Look at the logs of Lambda function
+
+```fish
+aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
+```
 
 
 ## Installation
