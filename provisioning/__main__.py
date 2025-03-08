@@ -136,7 +136,6 @@ http_endpoint = aws.apigatewayv2.Api(
 
 http_lambda_backend = aws.apigatewayv2.Integration(
     "lambda_integration",
-    name=f"{stack_name}_gen-ai-on-aws",
     api_id=http_endpoint.id,
     integration_type="AWS_PROXY",
     connection_type="INTERNET",
