@@ -19,6 +19,7 @@ Install
 
  - [uv](https://docs.astral.sh/uv/getting-started/installation/) python version manager & package manager
  - [Docker](https://docs.docker.com/engine/install/) to build zip files that contain app code
+ - [httpie](https://httpie.io/cli) (improved curl like cli tool)
 
 
  Clone the repostory, then run commands below from the repo root.
@@ -90,10 +91,17 @@ aws secretsmanager create-secret --secret-string '{"key": "sk-lf-xxx"}' --name "
 
 ## Development
 
+Run FastAPI server in local
+
 ```fish
 cd app
-uv sync
-uv run fastapi
+uv run fastapi run gen_ai_on_aws/main.py
+```
+
+Test API
+
+```fish
+http POST http://0.0.0.0:8000/extract-user text="My name is Bob, I am 40 years old, bb@gmail.com"
 ```
 
 ### Running Unit Tests
