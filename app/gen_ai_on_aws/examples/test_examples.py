@@ -1,11 +1,13 @@
 from fastapi.testclient import TestClient
-from gen_ai_on_aws.main import User, app
+from gen_ai_on_aws.main import app
+from gen_ai_on_aws.examples.types import User
+
 
 client = TestClient(app)
 
 
 def test_hello():
-    response = client.get("/hello")
+    response = client.get("/examples/hello")
     assert response.status_code == 200
     assert response.json() == "Hello, world!"
 
@@ -14,7 +16,7 @@ def test_extract_user():
     test_text = (
         "My name is John Doe, I am 30 years old, and my email is john@example.com"
     )
-    response = client.post("/extract-user", json={"text": test_text})
+    response = client.post("/examples/extract-user", json={"text": test_text})
 
     assert response.status_code == 200
     data = response.json()
@@ -26,7 +28,7 @@ def test_extract_user():
 
     # Test with missing email
     test_text_no_email = "My name is Jane Doe and I am 25 years old"
-    response = client.post("/extract-user", json={"text": test_text_no_email})
+    response = client.post("/examples/extract-user", json={"text": test_text_no_email})
 
     assert response.status_code == 200
     data = response.json()
@@ -40,7 +42,7 @@ def test_extract_user():
 def test_extract_user_failure():
     # Test with text that doesn't contain any user information
     test_text = "This is a random text without any user information"
-    response = client.post("/extract-user", json={"text": test_text})
+    response = client.post("/examples/extract-user", json={"text": test_text})
 
     # Since the LLM might try to hallucinate values, we should check that
     # the response at least contains valid User model fields
