@@ -1,11 +1,24 @@
-import json
-import logging
 import os
-
+import logging
 import boto3
+import json
+import litellm
 from gen_ai_on_aws.types import LangFuseConfig
 
-logger = logging.getLogger()
+
+logger = logging.getLogger(__name__)
+
+
+try:
+    from gen_ai_on_aws.version import VERSION
+except ImportError:
+    VERSION = "local"
+
+
+MODEL = os.getenv("MODEL", "anthropic/claude-3-5-sonnet-20241022")
+STACK_NAME = os.environ["STACK_NAME"]
+FASTAPI_DEBUG = os.environ.get("FASTAPI_DEBUG", "false").lower() in ["1", "true", "yes"]
+
 
 session = boto3.session.Session()
 client = session.client(service_name="secretsmanager")
@@ -52,3 +65,18 @@ def get_langfuse_config(stack_name: str) -> LangFuseConfig | None:
     except Exception as e:
         logger.error(f"Error fetching Langfuse secrets: {e}")
         return None
+
+
+if anthropic_api_key := get_anthropic_api_key(stack_name=STACK_NAME):
+    os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
+
+
+# configure langfuse is running inside AWS Lambda
+if os.environ.get("AWS_EXECUTION_ENV") is not None:
+    if langfuse_config := get_langfuse_config(stack_name=STACK_NAME):
+        os.environ["LANGFUSE_PUBLIC_KEY"] = langfuse_config.public_key
+        os.environ["LANGFUSE_SECRET_KEY"] = langfuse_config.secret_key
+        os.environ["LANGFUSE_HOST"] = langfuse_config.host
+
+        litellm.success_callback = ["langfuse"]
+        litellm.failure_callback = ["langfuse"]
