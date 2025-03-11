@@ -17,7 +17,7 @@ class QueueService:
         self.queue_url = queue_url
         self.sqs_client = boto3.client("sqs")
 
-    def send_message(self, payload) -> str:
+    async def send_message(self, payload) -> str:
         """Send a message to the SQS queue.
 
         Args:
