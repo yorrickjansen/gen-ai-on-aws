@@ -20,7 +20,7 @@ cd "$BUILD_DIR"
 uv pip install --target . -r "$SCRIPT_DIR/pyproject.toml"
 
 # Copy source code
-cp -r "$SCRIPT_DIR/src/worker" "$BUILD_DIR/worker"
+cp -r "$SCRIPT_DIR/worker" "$BUILD_DIR/worker"
 
 # Create version.py
 echo "VERSION = \"$VERSION\"" > "$BUILD_DIR/worker/version.py"

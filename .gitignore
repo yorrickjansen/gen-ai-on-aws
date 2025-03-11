@@ -3,6 +3,7 @@ provisioning/venv/
 app/venv/
 
 app/build/
+worker/build/
 
 
 .aider*
