@@ -1,11 +1,9 @@
 import logging
-from fastapi import FastAPI
-from gen_ai_on_aws.config import (
-    settings,
-)
-from mangum import Mangum
-from gen_ai_on_aws.routers import router
 
+from fastapi import FastAPI
+from gen_ai_on_aws.config import settings
+from gen_ai_on_aws.routers import router
+from mangum import Mangum
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)

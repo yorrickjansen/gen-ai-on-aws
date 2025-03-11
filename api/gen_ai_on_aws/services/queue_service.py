@@ -1,7 +1,7 @@
-import json
 import logging
-import boto3
 import uuid
+
+import boto3
 from gen_ai_on_aws.models.queue import QueueMessage
 
 logger = logging.getLogger(__name__)

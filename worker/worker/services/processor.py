@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Optional
 
@@ -6,8 +5,8 @@ import instructor
 from langfuse.decorators import langfuse_context, observe
 from litellm import completion
 
-from worker.models.queue import User, ExtractUserRequest
-from worker.config import settings, VERSION
+from worker.config import VERSION, settings
+from worker.models.queue import ExtractUserRequest, User
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +16,16 @@ client = instructor.from_litellm(completion)
 
 class Processor:
     """Processes messages from the SQS queue."""
-    
+
     @observe
-    async def process_extract_user_request(self, request: ExtractUserRequest) -> User | None:
+    async def process_extract_user_request(
+        self, request: ExtractUserRequest
+    ) -> User | None:
         """Process a request to extract user information from text.
-        
+
         Args:
             request: The request containing the text to extract user information from
-            
+
         Returns:
             User | None: The extracted user information, or None if no valid user information was found
         """

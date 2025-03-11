@@ -1,11 +1,11 @@
-import os
-import logging
-import boto3
 import json
-import litellm
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from gen_ai_on_aws.types import LangFuseConfig
+import logging
+import os
 
+import boto3
+import litellm
+from gen_ai_on_aws.types import LangFuseConfig
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 

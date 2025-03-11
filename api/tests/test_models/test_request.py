@@ -1,4 +1,8 @@
-from gen_ai_on_aws.examples.types import ExtractUserRequest, User, ExtractUserAsyncResponse
+from gen_ai_on_aws.examples.types import (
+    ExtractUserAsyncResponse,
+    ExtractUserRequest,
+    User,
+)
 
 
 def test_extract_user_request():
@@ -10,21 +14,14 @@ def test_extract_user_request():
 
 def test_user_model():
     """Test User model."""
-    data = {
-        "name": "John Doe",
-        "age": 30,
-        "email": "john@example.com"
-    }
+    data = {"name": "John Doe", "age": 30, "email": "john@example.com"}
     user = User(**data)
     assert user.name == "John Doe"
     assert user.age == 30
     assert user.email == "john@example.com"
 
     # Test with missing email
-    data = {
-        "name": "Jane Doe",
-        "age": 25
-    }
+    data = {"name": "Jane Doe", "age": 25}
     user = User(**data)
     assert user.name == "Jane Doe"
     assert user.age == 25

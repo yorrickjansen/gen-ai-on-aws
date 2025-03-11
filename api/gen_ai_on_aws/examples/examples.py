@@ -1,18 +1,15 @@
-from re import S
+import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends
 
 import instructor
-import logging
-
+from fastapi import APIRouter, Depends, HTTPException
+from gen_ai_on_aws.config import VERSION, settings
 from gen_ai_on_aws.examples.types import (
+    ExtractUserAsyncResponse,
     ExtractUserRequest,
     User,
-    ExtractUserAsyncResponse,
 )
-from gen_ai_on_aws.models.queue import QueueMessage
 from gen_ai_on_aws.services.queue_service import QueueService
-from gen_ai_on_aws.config import VERSION, settings
 from langfuse.decorators import langfuse_context, observe
 from litellm import completion
 
