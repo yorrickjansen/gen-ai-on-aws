@@ -1,6 +1,9 @@
 from fastapi.testclient import TestClient
+import unittest.mock as mock
+
 from gen_ai_on_aws.main import app
 from gen_ai_on_aws.examples.types import User
+from gen_ai_on_aws.services.queue_service import QueueService
 
 
 client = TestClient(app)
@@ -49,3 +52,27 @@ def test_extract_user_failure():
     assert response.status_code == 200
     data = response.json()
     assert data is None
+
+
+@mock.patch.object(QueueService, 'send_message')
+@mock.patch('gen_ai_on_aws.examples.examples.get_queue_service')
+def test_extract_user_async(mock_get_queue_service, mock_send_message):
+    # Mock the queue service
+    mock_queue_service = mock.MagicMock()
+    mock_get_queue_service.return_value = mock_queue_service
+    
+    # Set up the send_message mock to return a request ID
+    mock_send_message.return_value = "test-request-id-123"
+    
+    # Test the endpoint
+    test_text = "My name is John Doe, I am 30 years old, and my email is john@example.com"
+    response = client.post("/examples/extract-user-async", json={"text": test_text})
+    
+    # Check the response
+    assert response.status_code == 200
+    data = response.json()
+    assert "request_id" in data
+    assert data["request_id"] == "test-request-id-123"
+    
+    # Verify the queue service was called correctly
+    mock_send_message.assert_called_once()

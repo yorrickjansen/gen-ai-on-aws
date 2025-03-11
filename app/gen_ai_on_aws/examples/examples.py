@@ -1,15 +1,16 @@
 from re import S
 from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends
 
 import instructor
 import logging
 
-from gen_ai_on_aws.examples.types import ExtractUserRequest, User
+from gen_ai_on_aws.examples.types import ExtractUserRequest, User, ExtractUserAsyncResponse
+from gen_ai_on_aws.models.queue import QueueMessage
+from gen_ai_on_aws.services.queue_service import QueueService
+from gen_ai_on_aws.config import VERSION, settings
 from langfuse.decorators import langfuse_context, observe
 from litellm import completion
-
-from fastapi import APIRouter
-from gen_ai_on_aws.config import VERSION, MODEL
 
 # Create instructor client using litellm
 client = instructor.from_litellm(completion)
@@ -17,6 +18,20 @@ client = instructor.from_litellm(completion)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def get_queue_service() -> QueueService:
+    """Dependency to get the QueueService.
+    
+    Returns:
+        QueueService: The initialized QueueService
+    """
+    if not settings.sqs_queue_url:
+        raise HTTPException(
+            status_code=500,
+            detail="SQS queue URL not configured"
+        )
+    return QueueService(queue_url=settings.sqs_queue_url)
 
 
 @router.get("/hello")
@@ -31,7 +46,7 @@ async def extract_user(request: ExtractUserRequest) -> User | None:
     langfuse_context.update_current_trace(metadata={"app_version": VERSION})
 
     response = client.chat.completions.create(
-        model=MODEL,
+        model=settings.model,
         messages=[
             {
                 "role": "system",
@@ -50,3 +65,31 @@ async def extract_user(request: ExtractUserRequest) -> User | None:
         },
     )
     return response
+
+
+@router.post("/extract-user-async")
+@observe
+async def extract_user_async(
+    request: ExtractUserRequest,
+    queue_service: QueueService = Depends(get_queue_service)
+) -> ExtractUserAsyncResponse:
+    """Send a request to extract user information to the queue for async processing.
+    
+    Args:
+        request: The request containing the text to extract user information from
+        queue_service: The QueueService to send the message to the queue
+        
+    Returns:
+        ExtractUserAsyncResponse: Response containing the request ID for tracking
+    """
+    logger.info(f"Sending async request to extract user from text: {request.text}")
+    langfuse_context.update_current_trace(metadata={"app_version": VERSION})
+    
+    request_id = await queue_service.send_message(request)
+    if not request_id:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send message to queue"
+        )
+    
+    return ExtractUserAsyncResponse(request_id=request_id)

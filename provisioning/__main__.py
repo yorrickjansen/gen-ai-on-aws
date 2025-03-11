@@ -1,5 +1,6 @@
 import glob
 import os
+import json
 
 import iam
 import pulumi
@@ -33,6 +34,52 @@ else:
 
 stack_name = pulumi.get_stack()
 
+######################
+## SQS Queue
+######################
+
+# Create a standard SQS queue for async processing
+sqs_queue = aws.sqs.Queue(
+    "async-processing-queue",
+    name=f"{stack_name}-async-processing-queue",
+    visibility_timeout_seconds=300,  # 5 minutes, same as Lambda timeout
+    message_retention_seconds=86400,  # 1 day
+    receive_wait_time_seconds=20,    # Long polling
+    tags={
+        "Name": f"{stack_name}-async-processing-queue",
+        "Environment": stack_name,
+    },
+)
+
+# Create a policy document for the queue
+queue_policy_document = sqs_queue.arn.apply(lambda arn: {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"
+            },
+            "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+            ],
+            "Resource": arn
+        }
+    ]
+})
+
+# Create the queue policy
+queue_policy = aws.sqs.QueuePolicy(
+    "queue-policy",
+    queue_url=sqs_queue.id,
+    policy=queue_policy_document.apply(lambda doc: json.dumps(doc))
+)
+
+##################
+## API Lambda
+##################
 
 lambda_func = aws.lambda_.Function(
     "app",
@@ -56,9 +103,66 @@ lambda_func = aws.lambda_.Function(
             "LANGFUSE_SECRET_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
             + config.require("langfuse_secret_key_secret_name"),
             "LANGFUSE_HOST": config.require("langfuse_host"),
+            "SQS_QUEUE_URL": sqs_queue.url,
         },
     },
 )
+
+##################
+## Worker Lambda
+##################
+
+# Load the worker code
+worker_version = config.get("worker_version", "latest")
+
+if worker_version == "latest":
+    list_of_files = glob.glob("../worker/build/packages/worker-package-*.zip")
+    if list_of_files:
+        latest_worker_file = max(list_of_files, key=os.path.getctime)
+        print(f"Using latest worker version: {latest_worker_file}")
+        worker_code = pulumi.FileArchive(latest_worker_file)
+    else:
+        print("No worker package found. Please build the worker package first.")
+        worker_code = None
+else:
+    print(f"Using worker version: {worker_version}")
+    worker_code = pulumi.FileArchive(f"../worker/build/packages/worker-package-{worker_version}.zip")
+
+if worker_code:
+    # Create the worker Lambda function
+    worker_lambda = aws.lambda_.Function(
+        "worker",
+        name=f"{stack_name}_gen-ai-on-aws-worker",
+        role=iam.worker_lambda_role.arn,
+        runtime="python3.13",
+        handler="worker.main.lambda_handler",
+        timeout=300,  # 5 minutes
+        memory_size=512,
+        code=worker_code,
+        environment={
+            "variables": {
+                "WORKER_VERSION": worker_version if worker_version != "latest" else "latest",
+                "MODEL": model_name,
+                "STACK_NAME": stack_name,
+                "ANTHROPIC_API_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
+                + config.require("anthropic_api_key_secret_name"),
+                "LANGFUSE_PUBLIC_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
+                + config.require("langfuse_public_key_secret_name"),
+                "LANGFUSE_SECRET_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
+                + config.require("langfuse_secret_key_secret_name"),
+                "LANGFUSE_HOST": config.require("langfuse_host"),
+            },
+        },
+    )
+
+    # Create event source mapping from SQS to Lambda
+    event_source_mapping = aws.lambda_.EventSourceMapping(
+        "worker-event-source-mapping",
+        event_source_arn=sqs_queue.arn,
+        function_name=worker_lambda.name,
+        batch_size=1,
+        maximum_batching_window_in_seconds=0,
+    )
 
 
 ####################################################################
@@ -189,3 +293,6 @@ pulumi.export(
 #     ),
 # )
 pulumi.export("lambda_function_name", lambda_func.name)
+pulumi.export("sqs_queue_url", sqs_queue.url)
+if worker_code:
+    pulumi.export("worker_lambda_function_name", worker_lambda.name)
