@@ -2,7 +2,7 @@
 provisioning/venv/
 app/venv/
 
-app/build/
+api/build/
 worker/build/
 
 

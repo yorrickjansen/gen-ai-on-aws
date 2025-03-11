@@ -14,7 +14,7 @@ custom_stage_name = "example"
 ## Lambda Function
 ##################
 
-# Create a Lambda function, using code from the `./app` folder.
+# Create a Lambda function, using code from the `./api` folder.
 
 # pulumi up -c APP_VERSION=latest
 app_version = config.require("app_version")
@@ -22,14 +22,14 @@ model_name = config.require("model_name")
 
 
 if app_version == "latest":
-    # find the latest file named `package-*.zip` in the `app/build/packages` folder, using file timestamp
-    list_of_files = glob.glob("../app/build/packages/package-*.zip")
+    # find the latest file named `api-package-*.zip` in the `api/build/packages` folder, using file timestamp
+    list_of_files = glob.glob("../api/build/packages/api-package-*.zip")
     latest_file = max(list_of_files, key=os.path.getctime)
     print(f"Using latest app version: {latest_file}")
     code = pulumi.FileArchive(latest_file)
 else:
     print(f"Using app version: {app_version}")
-    code = pulumi.FileArchive(f"../app/build/packages/package-{app_version}.zip")
+    code = pulumi.FileArchive(f"../api/build/packages/api-package-{app_version}.zip")
 
 
 stack_name = pulumi.get_stack()

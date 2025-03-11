@@ -25,13 +25,13 @@ uv pip install \
 
 # Following the AWS Lambda documentation, we can then bundle these dependencies into a zip as follows:
 cd "build/packages/${SHORT_SHA}"
-zip -qr ../package-${SHORT_SHA}.zip .
+zip -qr ../api-package-${SHORT_SHA}.zip .
 cd ../../..
 
 # Finally, we can add the application code to the zip archive:
-zip -qr build/packages/package-${SHORT_SHA}.zip gen_ai_on_aws
+zip -qr build/packages/api-package-${SHORT_SHA}.zip gen_ai_on_aws
 
 # Clean up the temporary version file
 rm gen_ai_on_aws/version.py
 
-echo "Built package: ./build/packages/package-${SHORT_SHA}.zip"
+echo "Built package: ./build/packages/api-package-${SHORT_SHA}.zip"
