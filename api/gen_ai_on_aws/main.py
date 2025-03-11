@@ -1,10 +1,6 @@
 import logging
-import os
-import litellm
 from fastapi import FastAPI
 from gen_ai_on_aws.config import (
-    get_anthropic_api_key,
-    get_langfuse_config,
     settings,
 )
 from mangum import Mangum
@@ -26,6 +22,7 @@ app = FastAPI(
         "email": "info@yorrickjansen.com",
     },
 )
-handler = Mangum(app)
+
+handler = Mangum(app, lifespan="off", api_gateway_base_path="/stage")
 
 app.include_router(router)

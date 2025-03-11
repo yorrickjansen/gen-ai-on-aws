@@ -8,7 +8,7 @@ import pulumi_aws as aws
 
 region = os.environ.get("AWS_DEFAULT_REGION")
 config = pulumi.Config()
-custom_stage_name = "example"
+custom_stage_name = "stage"
 
 ##################
 ## Lambda Function
@@ -44,7 +44,7 @@ sqs_queue = aws.sqs.Queue(
     name=f"{stack_name}-async-processing-queue",
     visibility_timeout_seconds=300,  # 5 minutes, same as Lambda timeout
     message_retention_seconds=86400,  # 1 day
-    receive_wait_time_seconds=20,    # Long polling
+    receive_wait_time_seconds=20,  # Long polling
     tags={
         "Name": f"{stack_name}-async-processing-queue",
         "Environment": stack_name,
@@ -52,29 +52,29 @@ sqs_queue = aws.sqs.Queue(
 )
 
 # Create a policy document for the queue
-queue_policy_document = sqs_queue.arn.apply(lambda arn: {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Service": "lambda.amazonaws.com"
-            },
-            "Action": [
-                "sqs:ReceiveMessage",
-                "sqs:DeleteMessage",
-                "sqs:GetQueueAttributes"
-            ],
-            "Resource": arn
-        }
-    ]
-})
+queue_policy_document = sqs_queue.arn.apply(
+    lambda arn: {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "lambda.amazonaws.com"},
+                "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes",
+                ],
+                "Resource": arn,
+            }
+        ],
+    }
+)
 
 # Create the queue policy
 queue_policy = aws.sqs.QueuePolicy(
     "queue-policy",
     queue_url=sqs_queue.id,
-    policy=queue_policy_document.apply(lambda doc: json.dumps(doc))
+    policy=queue_policy_document.apply(lambda doc: json.dumps(doc)),
 )
 
 ##################
@@ -126,7 +126,9 @@ if worker_version == "latest":
         worker_code = None
 else:
     print(f"Using worker version: {worker_version}")
-    worker_code = pulumi.FileArchive(f"../worker/build/packages/worker-package-{worker_version}.zip")
+    worker_code = pulumi.FileArchive(
+        f"../worker/build/packages/worker-package-{worker_version}.zip"
+    )
 
 if worker_code:
     # Create the worker Lambda function
@@ -141,7 +143,9 @@ if worker_code:
         code=worker_code,
         environment={
             "variables": {
-                "WORKER_VERSION": worker_version if worker_version != "latest" else "latest",
+                "WORKER_VERSION": worker_version
+                if worker_version != "latest"
+                else "latest",
                 "MODEL": model_name,
                 "STACK_NAME": stack_name,
                 "ANTHROPIC_API_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
@@ -165,72 +169,9 @@ if worker_code:
     )
 
 
-####################################################################
-##
-## API Gateway REST API (API Gateway V1 / original)
-##    /{proxy+} - passes all requests through to the lambda function
-##
-####################################################################
-
-
-# Create a single Swagger spec route handler for a Lambda function.
-def swagger_route_handler(arn):
-    return {
-        "x-amazon-apigateway-any-method": {
-            "x-amazon-apigateway-integration": {
-                "uri": pulumi.Output.format(
-                    "arn:aws:apigateway:{0}:lambda:path/2015-03-31/functions/{1}/invocations",
-                    region,
-                    arn,
-                ),
-                "passthroughBehavior": "when_no_match",
-                "httpMethod": "POST",
-                "type": "aws_proxy",
-            },
-        },
-    }
-
-
-# Create the API Gateway Rest API, using a swagger spec.
-rest_api = aws.apigateway.RestApi(
-    "api",
-    name=f"{stack_name}_gen-ai-on-aws",
-    body=pulumi.Output.json_dumps(
-        {
-            "swagger": "2.0",
-            "info": {"title": "api", "version": "1.0"},
-            "paths": {
-                "/{proxy+}": swagger_route_handler(lambda_func.arn),
-            },
-        }
-    ),
-)
-
-# Create a deployment of the Rest API.
-deployment = aws.apigateway.Deployment(
-    "api-deployment",
-    rest_api=rest_api.id,
-)
-
-# Create a stage, which is an addressable instance of the Rest API. Set it to point at the latest deployment.
-stage = aws.apigateway.Stage(
-    "api-stage",
-    rest_api=rest_api.id,
-    deployment=deployment.id,
-    stage_name=custom_stage_name,
-)
-
-# Give permissions from API Gateway to invoke the Lambda
-rest_invoke_permission = aws.lambda_.Permission(
-    "api-rest-lambda-permission",
-    action="lambda:invokeFunction",
-    function=lambda_func.name,
-    principal="apigateway.amazonaws.com",
-    source_arn=deployment.execution_arn.apply(lambda arn: arn + "*/*"),
-)
-
 #########################################################################
-# Create an HTTP API and attach the lambda function to it
+##
+## HTTP API (API Gateway V2)
 ##    /{proxy+} - passes all requests through to the lambda function
 ##
 #########################################################################
@@ -260,7 +201,7 @@ http_route = aws.apigatewayv2.Route(
 
 http_stage = aws.apigatewayv2.Stage(
     "stage",
-    name=f"{stack_name}_gen-ai-on-aws",
+    name=custom_stage_name,
     api_id=http_endpoint.id,
     route_settings=[
         {
@@ -281,17 +222,14 @@ http_invoke_permission = aws.lambda_.Permission(
     source_arn=http_endpoint.execution_arn.apply(lambda arn: arn + "*/*"),
 )
 
-# Export the https endpoint of the running Rest API
+# Export the https endpoint of the HTTP API
+# For API Gateway HTTP APIs, we can adjust the Lambda integration to handle stage name in path
 pulumi.export(
-    "apigateway-rest-endpoint",
-    deployment.invoke_url.apply(lambda url: url + custom_stage_name),
+    "apigatewayv2-http-endpoint",
+    http_endpoint.api_endpoint.apply(
+        lambda endpoint: f"{endpoint}/{custom_stage_name}/"
+    ),
 )
-# pulumi.export(
-#     "apigatewayv2-http-endpoint",
-#     pulumi.Output.all(http_endpoint.api_endpoint, http_stage.name).apply(
-#         lambda values: values[0] + "/" + values[1] + "/"
-#     ),
-# )
 pulumi.export("lambda_function_name", lambda_func.name)
 pulumi.export("sqs_queue_url", sqs_queue.url)
 if worker_code:
