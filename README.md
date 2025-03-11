@@ -91,6 +91,12 @@ Each directory has its own dependency set (pyproject.toml). Root dependencies en
 
 ## Deployment
 
+TLDR
+
+```bash
+./build_lambda_packages.sh; and ./run_pulumi.sh up -y
+```
+
 ### 1. Build the Lambda Packages
 
 The project provides flexible options for building Lambda deployment packages:
