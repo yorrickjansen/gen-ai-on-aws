@@ -1,4 +1,20 @@
 #!/usr/bin/env bash
+set -e
+
+# Determine the script directory and switch to it
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+INITIAL_DIR="$(pwd)"
+
+# Check if running from repo root or API directory
+if [[ "$INITIAL_DIR" == "$REPO_ROOT" ]]; then
+    # Running from repo root
+    cd "$SCRIPT_DIR"
+    RELATIVE_PATH="api/"
+else
+    # Running from within api directory
+    RELATIVE_PATH="./"
+fi
 
 # https://docs.astral.sh/uv/guides/integration/aws-lambda/#deploying-a-zip-archive
 SHORT_SHA=$(git rev-parse --short HEAD)
@@ -13,6 +29,8 @@ fi
 mkdir -p gen_ai_on_aws
 echo "VERSION = \"${SHORT_SHA}\"" > gen_ai_on_aws/version.py
 
+# Create build directories
+mkdir -p build/packages
 
 uv export --frozen --no-dev --no-editable -o "build/requirements-${SHORT_SHA}.txt"
 uv pip install \
@@ -34,4 +52,7 @@ zip -qr build/packages/api-package-${SHORT_SHA}.zip gen_ai_on_aws
 # Clean up the temporary version file
 rm gen_ai_on_aws/version.py
 
-echo "Built package: ./build/packages/api-package-${SHORT_SHA}.zip"
+echo "Package created at: ${RELATIVE_PATH}build/packages/api-package-${SHORT_SHA}.zip"
+
+# Return to the original directory
+cd "$INITIAL_DIR"

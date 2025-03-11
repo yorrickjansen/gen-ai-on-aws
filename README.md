@@ -69,10 +69,15 @@ graph TB
 
 ## Repository Structure
 
-- `app/` - FastAPI application code
+- `api/` - FastAPI application code
   - `gen_ai_on_aws/` - Main application
   - `build/` - Build artifacts
+- `worker/` - Lambda worker code for async processing
+  - `worker/` - Main worker logic
+  - `build/` - Build artifacts
 - `provisioning/` - Pulumi IaC for AWS resources
+- `specs/` - AI Coding prompt
+- `ai-docs/` - Reference documentation for AI coding, scraped with Firecrawl MCP (Model Context Protocol)
 
 Each directory has its own dependency set (pyproject.toml). Root dependencies enforce consistent standards across the repository.
 
@@ -86,14 +91,26 @@ Each directory has its own dependency set (pyproject.toml). Root dependencies en
 
 ## Deployment
 
-### 1. Build the Lambda Package
+### 1. Build the Lambda Packages
+
+The project provides flexible options for building Lambda deployment packages:
 
 ```bash
-cd app
-./build_lambda_package.sh
+# Option 1: Build both API and worker packages from repository root
+./build_lambda_packages.sh
+
+# Option 2: Build only the API package
+./api/build_lambda_package.sh
+
+# Option 3: Build only the worker package (with optional version)
+./worker/build_lambda_package.sh [version]
 ```
 
-This creates a zip file at `app/build/packages/package-<git-hash>.zip`
+These scripts can be run from either the repository root or their respective directories. The API package uses the git commit hash for versioning, while the worker package uses either the provided version parameter or a timestamp.
+
+This creates deployment packages at:
+- API: `api/build/packages/api-package-<git-hash>.zip`
+- Worker: `worker/build/packages/worker-package-<version>.zip`
 
 ### 2. Provision AWS Infrastructure
 
