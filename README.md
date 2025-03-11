@@ -13,6 +13,60 @@ This repository provides a complete solution for deploying GenAI applications on
 - LangFuse for observability and tracing
 - Comprehensive testing and development tools
 
+## Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "API Gateway"
+            api[API Gateway REST/HTTP API]
+        end
+        
+        subgraph "AWS Lambda"
+            lambda[Lambda Function<br>Python 3.13]
+        end
+        
+        subgraph "AWS Secrets Manager"
+            secrets[Secrets Manager<br>API Keys]
+        end
+        
+        subgraph "CloudWatch"
+            logs[CloudWatch Logs]
+        end
+    end
+    
+    subgraph "External Services"
+        anthropic[Anthropic API<br>Claude Models]
+        langfuse[LangFuse<br>Observability]
+    end
+    
+    subgraph "Application Components"
+        app[FastAPI Application]
+        litellm[LiteLLM<br>Model Integration]
+        mangum[Mangum<br>AWS Lambda Handler]
+        routers[FastAPI Routers<br>Endpoints]
+    end
+    
+    client[Client] -->|HTTP Request| api
+    api -->|Forward Request| lambda
+    lambda -->|Log Events| logs
+    lambda -->|Process Request| app
+    app -->|Route Request| routers
+    routers -->|LLM Request| litellm
+    litellm -->|LLM Call| anthropic
+    lambda -->|Fetch API Keys| secrets
+    litellm -->|Trace LLM Calls| langfuse
+    app -->|AWS Lambda Integration| mangum
+    
+    classDef aws fill:#FF9900,stroke:#232F3E,color:white;
+    classDef ext fill:#60A5FA,stroke:#2563EB,color:white;
+    classDef app fill:#4ADE80,stroke:#16A34A,color:white;
+    
+    class api,lambda,secrets,logs aws;
+    class anthropic,langfuse ext;
+    class app,litellm,mangum,routers app;
+```
+
 ## Repository Structure
 
 - `app/` - FastAPI application code
@@ -138,7 +192,7 @@ uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.
 - ✅ Anthropic/Bedrock integration
 - ✅ LangFuse tracing
 - ✅ Unit testing
-- ⬜ Architecture diagram
+- ✅ Architecture diagram
 - ⬜ SQS queue and worker processing
 - ⬜ LLM chain/pattern examples
 - ⬜ RAG with Aurora PostgreSQL
