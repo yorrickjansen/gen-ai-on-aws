@@ -5,7 +5,11 @@ from fastapi import APIRouter, HTTPException, Depends
 import instructor
 import logging
 
-from gen_ai_on_aws.examples.types import ExtractUserRequest, User, ExtractUserAsyncResponse
+from gen_ai_on_aws.examples.types import (
+    ExtractUserRequest,
+    User,
+    ExtractUserAsyncResponse,
+)
 from gen_ai_on_aws.models.queue import QueueMessage
 from gen_ai_on_aws.services.queue_service import QueueService
 from gen_ai_on_aws.config import VERSION, settings
@@ -22,15 +26,12 @@ logger = logging.getLogger(__name__)
 
 def get_queue_service() -> QueueService:
     """Dependency to get the QueueService.
-    
+
     Returns:
         QueueService: The initialized QueueService
     """
     if not settings.sqs_queue_url:
-        raise HTTPException(
-            status_code=500,
-            detail="SQS queue URL not configured"
-        )
+        raise HTTPException(status_code=500, detail="SQS queue URL not configured")
     return QueueService(queue_url=settings.sqs_queue_url)
 
 
@@ -71,25 +72,22 @@ async def extract_user(request: ExtractUserRequest) -> User | None:
 @observe
 async def extract_user_async(
     request: ExtractUserRequest,
-    queue_service: QueueService = Depends(get_queue_service)
+    queue_service: QueueService = Depends(get_queue_service),
 ) -> ExtractUserAsyncResponse:
     """Send a request to extract user information to the queue for async processing.
-    
+
     Args:
         request: The request containing the text to extract user information from
         queue_service: The QueueService to send the message to the queue
-        
+
     Returns:
         ExtractUserAsyncResponse: Response containing the request ID for tracking
     """
     logger.info(f"Sending async request to extract user from text: {request.text}")
     langfuse_context.update_current_trace(metadata={"app_version": VERSION})
-    
-    request_id = await queue_service.send_message(request)
+
+    request_id = queue_service.send_message(request)
     if not request_id:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to send message to queue"
-        )
-    
+        raise HTTPException(status_code=500, detail="Failed to send message to queue")
+
     return ExtractUserAsyncResponse(request_id=request_id)
