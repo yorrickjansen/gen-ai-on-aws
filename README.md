@@ -1,150 +1,153 @@
 # GenAI on AWS
 
-This repo contains an example on how to quickly deploy a production ready GenAI app in AWS, using a serverless tech stack.
+A production-ready GenAI application framework on AWS using a serverless architecture.
 
+## Overview
 
-## General Architecture
+This repository provides a complete solution for deploying GenAI applications on AWS with:
 
-## Structure
+- FastAPI backend running on AWS Lambda
+- API Gateway for HTTP endpoints
+- Anthropic/Claude integration (with support for other LLMs via LiteLLM)
+- Infrastructure as Code using Pulumi
+- LangFuse for observability and tracing
+- Comprehensive testing and development tools
 
-- `provisioning` directory contains the (Pulumi) scripts to create resources.
-- `app` contains the python app code.
-Each directory contains a different dependency set (pyproject file).
-Dependencies at the root of the project aim to apply  consistent rules at repo level.
+## Repository Structure
 
+- `app/` - FastAPI application code
+  - `gen_ai_on_aws/` - Main application
+  - `build/` - Build artifacts
+- `provisioning/` - Pulumi IaC for AWS resources
+
+Each directory has its own dependency set (pyproject.toml). Root dependencies enforce consistent standards across the repository.
+
+## Prerequisites
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) - Python version and package manager
+- [Docker](https://docs.docker.com/engine/install/) - Required for building Lambda packages
+- [httpie](https://httpie.io/cli) - Modern HTTP client (optional but recommended)
+- AWS Account with appropriate permissions
+- Anthropic API key (if using Claude)
 
 ## Deployment
 
-Install 
+### 1. Build the Lambda Package
 
- - [uv](https://docs.astral.sh/uv/getting-started/installation/) python version manager & package manager
- - [Docker](https://docs.docker.com/engine/install/) to build zip files that contain app code
- - [httpie](https://httpie.io/cli) (improved curl like cli tool)
-
-
- Clone the repostory, then run commands below from the repo root.
-
- ### Build app 
-
- This will package code under `app/build/packages/package-<git-hash>.zip`
-
- ```fish
+```bash
 cd app
 ./build_lambda_package.sh
- ```
+```
 
+This creates a zip file at `app/build/packages/package-<git-hash>.zip`
 
-### Provision infrastructure and deploy code
+### 2. Provision AWS Infrastructure
 
- This uses Pulumi to create API and Lambda function taht runs the front API
-
- ```fish
+```bash
 cd provisioning
-uv run pulumi login --local  ## stores state files on local disk under $HOME directory, but you can also store it on S3 / Pulumi Cloud
-export PULUMI_CONFIG_PASSPHRASE=""  # encrypts secrets in state file, should not be empty
-export AWS_DEFAULT_REGION=us-east-1  # choose where you want to deploy
-export PULUMI_STACK=demo
-uv run pulumi stack init $PULUMI_STACK  # creates a "demo" stack, you can create as many stacks as you want
+uv run pulumi login --local  # Store state locally (can also use S3/Pulumi Cloud)
+export PULUMI_CONFIG_PASSPHRASE="your-passphrase"  # For state file encryption
+export AWS_DEFAULT_REGION=us-east-1
+export PULUMI_STACK=dev
+uv run pulumi stack init $PULUMI_STACK
 ```
 
-Then, add your AWS credentials in environment variables (to simplify things, those credentials should be one attached to a role / user that has admin level credentials, or permissions to provision all resources needed)
+### 3. Configure AWS Credentials
 
-```fish
-export AWS_ACCESS_KEY_ID="ASIAxxx"
-export AWS_SECRET_ACCESS_KEY="xxx"
-export AWS_SESSION_TOKEN="xxx"
+```bash
+export AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY"
+export AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
+export AWS_SESSION_TOKEN="YOUR_SESSION_TOKEN"  # If using temporary credentials
 ```
 
-Store the Anthropic API key in AWS secrets manager so keys stay secure inside AWS, and code fetch them on demand at runtime (other LLMs / providers are supported through LiteLLM):
+### 4. Store API Keys Securely
 
-```fish
-aws secretsmanager create-secret --secret-string '{"key": "sk-ant-xxx"}' --name "gen-ai-on-aws/$PULUMI_STACK/anthropic_api_key"
+```bash
+aws secretsmanager create-secret \
+  --secret-string '{"key": "sk-ant-your-key"}' \
+  --name "gen-ai-on-aws/$PULUMI_STACK/anthropic_api_key"
 ```
 
-Create resources
+### 5. Deploy Resources
 
-```fish
+```bash
 uv run pulumi up -y
-````
-
-Call API
-
-```fish
-http POST $(pulumi stack output apigateway-rest-endpoint)"/examples/extract-user" text="My name is Bob, I am 40 years old"
 ```
 
-Look at the logs of Lambda function
+### 6. Test the Deployment
 
-```fish
+```bash
+http POST $(pulumi stack output apigateway-rest-endpoint)"/examples/extract-user" \
+  text="My name is Bob, I am 40 years old"
+```
+
+### 7. Monitor Lambda Logs
+
+```bash
 aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
 ```
 
+## Advanced Configuration
 
-### [Optional] Setup LangFuse
+### LangFuse Integration
 
-Create a new project in Langfuse Cloud, and define those secrets to send tracing data to Langfuse
+```bash
+aws secretsmanager create-secret \
+  --secret-string '{"key": "pk-lf-xxx"}' \
+  --name "gen-ai-on-aws/$PULUMI_STACK/langfuse_public_key"
 
-```fish
-aws secretsmanager create-secret --secret-string '{"key": "pk-lf-xxx"}' --name "gen-ai-on-aws/$PULUMI_STACK/langfuse_public_key"
-aws secretsmanager create-secret --secret-string '{"key": "sk-lf-xxx"}' --name "gen-ai-on-aws/$PULUMI_STACK/langfuse_secret_key"
+aws secretsmanager create-secret \
+  --secret-string '{"key": "sk-lf-xxx"}' \
+  --name "gen-ai-on-aws/$PULUMI_STACK/langfuse_secret_key"
 ```
 
-## Development
+## Local Development
 
-Run FastAPI server in local
+### Run the FastAPI Server
 
-```fish
+```bash
 cd app
-uv run fastapi run gen_ai_on_aws/main.py --reload
+uv run uvicorn gen_ai_on_aws.main:app --reload
 ```
 
-Test API
+### Test the API Locally
 
-```fish
-http POST http://0.0.0.0:8000/examples/extract-user text="My name is Bob, I am 40 years old, bb@gmail.com"
+```bash
+http POST http://0.0.0.0:8000/examples/extract-user \
+  text="My name is Bob, I am 40 years old, bb@gmail.com"
 ```
 
-### Running Unit Tests
+### Running Tests
 
-To run the unit tests:
-
-```fish
+```bash
 cd app
-uv run pytest
+uv run pytest                        # Run all tests
+uv run pytest -v                     # Verbose output
+uv run pytest --cov=gen_ai_on_aws    # Test coverage
 ```
 
-For more verbose output, use:
-
-```fish
-uv run pytest -v
+Generate HTML coverage report:
+```bash
+uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.html
 ```
 
-To see test coverage:
+## Roadmap
 
-```fish
-uv run pytest --cov=gen_ai_on_aws; and uv run coverage html; and open htmlcov/index.html 
-```
+- ✅ FastAPI application with routers
+- ✅ Lambda packaging 
+- ✅ Anthropic/Bedrock integration
+- ✅ LangFuse tracing
+- ✅ Unit testing
+- ⬜ Architecture diagram
+- ⬜ SQS queue and worker processing
+- ⬜ LLM chain/pattern examples
+- ⬜ RAG with Aurora PostgreSQL
+- ⬜ Enhanced monitoring and alarms
+- ⬜ CI/CD with GitHub Actions
+- ⬜ Lambda layers optimization
+- ⬜ Progressive deployments
+- ⬜ Frontend implementation
 
-## TODO
+## License
 
-- [ ] Architecture Diagram
-- [ ] Add SQS queue and worker
-- [ ] Demo of LLM chain / patterns
-- [ ] Add aurora Postgres for RAG
-- [x] Add FastAPI routers
-- [ ] Monitoring, alarms
-- [ ] Add tag to all pulumi resources
-- [ ] CI/CD with GH Actions
-- [ ] Use lambda layers to decrease deployment speed (based on hash of requirements)
-- [ ] Progressive deployments with CodeDeploy
-- [x] integrate uv and direnv
-- [x] packaging of Lambda
-- [x] pre commit config
-- [x] Lint, Type Checking (ruff), back
-- [x] Use FastAPI for app
-- [x] Make a first call to Bedrock / Anthropic
-- [x] Setup unit tests
-- [x] Add langfuse tracing
-- [ ] Add more info in langfuse tracing, such as xray trace id
-- [ ] Push response / result using a websocket
-- [ ] What frontend to illustrate demo?
+See the [LICENSE](LICENSE) file for details.
