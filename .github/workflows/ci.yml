@@ -21,7 +21,7 @@ jobs:
         pip install uv
     - name: Install dependencies
       run: |
-        uv sync -e ".[dev]"
+        uv sync
     - name: Lint with ruff
       run: |
         ruff check .
@@ -43,7 +43,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd api
-        uv sync -e ".[dev]"
+        uv sync
     - name: Run API tests
       run: |
         cd api
@@ -71,7 +71,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd worker
-        uv sync -e ".[dev]"
+        uv sync
     - name: Run worker tests
       run: |
         cd worker
@@ -99,7 +99,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd api
-        uv sync -e ".[dev]"
+        uv sync
         uv pip install fastapi uvicorn
     - name: Test API startup
       run: |
@@ -128,7 +128,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd provisioning
-        uv sync -e ".[dev]"
+        uv sync
     - name: Install Pulumi
       uses: pulumi/actions@v5
     - name: Test Pulumi configuration
