@@ -80,14 +80,13 @@ async def test_process_extract_user_request_error(mock_create, processor):
     mock_create.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_lambda_handler():
+def test_lambda_handler():
     """Test the Lambda handler function."""
     from worker.main import lambda_handler
 
-    # Mock the process_message function
-    with mock.patch("worker.main.process_message") as mock_process:
-        mock_process.return_value = {
+    # Mock the asyncio.run function
+    with mock.patch("asyncio.run") as mock_run:
+        mock_run.return_value = {
             "request_id": "test-id",
             "result": {"name": "John Doe", "age": 30, "email": "john@example.com"},
             "success": True,
@@ -110,7 +109,7 @@ async def test_lambda_handler():
         }
 
         # Process the event
-        result = await lambda_handler(event, None)
+        result = lambda_handler(event, None)
 
         # Verify the result
         assert result["statusCode"] == 200
@@ -119,5 +118,5 @@ async def test_lambda_handler():
         assert len(body["results"]) == 1
         assert body["results"][0]["success"] is True
 
-        # Verify process_message was called correctly
-        mock_process.assert_called_once()
+        # Verify asyncio.run was called correctly
+        mock_run.assert_called_once()

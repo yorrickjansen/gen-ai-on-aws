@@ -37,7 +37,7 @@ async def process_message(message_body: str) -> Dict[str, Any]:
         return {"error": str(e), "success": False}
 
 
-async def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """AWS Lambda handler function.
 
     Args:
@@ -47,6 +47,8 @@ async def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: The result of processing the messages
     """
+    import asyncio
+
     logger.info(f"Received event: {json.dumps(event)}")
 
     results = []
@@ -54,7 +56,7 @@ async def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     # Process each record (message) in the event
     for record in event.get("Records", []):
         message_body = record.get("body", "{}")
-        result = await process_message(message_body)
+        result = asyncio.run(process_message(message_body))
         results.append(result)
 
     return {"statusCode": 200, "body": json.dumps({"results": results})}

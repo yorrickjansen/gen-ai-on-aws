@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     """Settings for the worker."""
 
     model: str = "anthropic/claude-3-5-sonnet-20241022"
-    stack_name: str
+    stack_name: str = "dev"  # Default to dev for testing
     anthropic_api_key_secret_name: str | None = None
     langfuse_public_key_secret_name: str | None = None
     langfuse_secret_key_secret_name: str | None = None
