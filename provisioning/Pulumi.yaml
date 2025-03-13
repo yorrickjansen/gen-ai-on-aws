@@ -6,7 +6,7 @@ runtime:
     virtualenv: .venv
 description: Generative AI on AWS
 config:
-  github_repo: yorrick/gen-ai-on-aws
+  github_repo: yorrickjansen/gen-ai-on-aws
   app_version: latest
   model_name: anthropic/claude-3-5-sonnet-20241022
   gen-ai-on-aws:anthropic_api_key_secret_name: anthropic_api_key
