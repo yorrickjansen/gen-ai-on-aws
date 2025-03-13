@@ -127,7 +127,6 @@ jobs:
       run: |
         cd api
         uv sync
-        uv pip install fastapi uvicorn
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -136,14 +135,14 @@ jobs:
     - name: Test API startup
       run: |
         cd api
-        # Start uvicorn in the background
-        STACK_NAME=${{ env.STACK_NAME }} uv run uvicorn gen_ai_on_aws.main:app --port 8000 &
+        # Start FastAPI server in the background
+        STACK_NAME=${{ env.STACK_NAME }} uv run fastapi run gen_ai_on_aws/main.py --reload --port 8000 &
         # Wait for the server to start
         sleep 5
         # Try to access the server
         curl -f http://localhost:8000/docs || exit 1
         # Kill the server
-        pkill -f uvicorn
+        pkill -f fastapi
 
   test-pulumi:
     runs-on: ubuntu-latest
