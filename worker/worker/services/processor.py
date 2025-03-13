@@ -19,18 +19,24 @@ class Processor:
 
     @observe
     async def process_extract_user_request(
-        self, request: ExtractUserRequest
+        self, request: ExtractUserRequest, request_id: str = None
     ) -> User | None:
         """Process a request to extract user information from text.
 
         Args:
             request: The request containing the text to extract user information from
+            request_id: The ID of the request for tracing
 
         Returns:
             User | None: The extracted user information, or None if no valid user information was found
         """
         logger.info(f"Processing request to extract user from text: {request.text}")
-        langfuse_context.update_current_trace(metadata={"app_version": VERSION})
+
+        # Update langfuse trace with metadata including request_id if available
+        metadata = {"app_version": VERSION}
+        if request_id:
+            metadata["request_id"] = request_id
+        langfuse_context.update_current_trace(metadata=metadata)
 
         try:
             response = client.chat.completions.create(
@@ -50,6 +56,7 @@ class Processor:
                 metadata={
                     "existing_trace_id": langfuse_context.get_current_trace_id(),  # set langfuse trace ID
                     "parent_observation_id": langfuse_context.get_current_observation_id(),
+                    **({"request_id": request_id} if request_id else {}),
                 },
             )
             return response

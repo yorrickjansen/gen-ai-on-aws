@@ -87,4 +87,7 @@ async def extract_user_async(
     if not request_id:
         raise HTTPException(status_code=500, detail="Failed to send message to queue")
 
+    # Add request_id to langfuse for traceability
+    langfuse_context.update_current_trace(metadata={"request_id": request_id})
+
     return ExtractUserAsyncResponse(request_id=request_id)

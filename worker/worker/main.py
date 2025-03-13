@@ -24,7 +24,9 @@ async def process_message(message_body: str) -> Dict[str, Any]:
         queue_message = QueueMessage.model_validate_json(message_body)
         logger.info(f"Processing message with request ID: {queue_message.request_id}")
 
-        result = await processor.process_extract_user_request(queue_message.payload)
+        result = await processor.process_extract_user_request(
+            request=queue_message.payload, request_id=queue_message.request_id
+        )
 
         return {
             "request_id": queue_message.request_id,
@@ -59,4 +61,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         result = asyncio.run(process_message(message_body))
         results.append(result)
 
-    return {"statusCode": 200, "body": json.dumps({"results": results})}
+    result = {"statusCode": 200, "body": json.dumps({"results": results})}
+
+    logger.info(f"Processed {len(results)} messages")
+    logger.info(f"Results: {json.dumps(result)}")
+
+    return result
