@@ -34,6 +34,9 @@ jobs:
 
   test-api:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC auth with AWS
+      contents: read   # Required to checkout code
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -48,10 +51,17 @@ jobs:
       run: |
         cd api
         uv sync
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Run API tests
       run: |
         cd api
         uv run pytest --cov=gen_ai_on_aws
+      env:
+        STACK_NAME: ${{ env.STACK_NAME }}
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
@@ -62,6 +72,9 @@ jobs:
 
   test-worker:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC auth with AWS
+      contents: read   # Required to checkout code
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -76,10 +89,17 @@ jobs:
       run: |
         cd worker
         uv sync
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Run worker tests
       run: |
         cd worker
         uv run pytest --cov=worker
+      env:
+        STACK_NAME: ${{ env.STACK_NAME }}
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
@@ -90,6 +110,9 @@ jobs:
 
   test-api-start:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC auth with AWS
+      contents: read   # Required to checkout code
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -105,11 +128,16 @@ jobs:
         cd api
         uv sync
         uv pip install fastapi uvicorn
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Test API startup
       run: |
         cd api
         # Start uvicorn in the background
-        uv run uvicorn gen_ai_on_aws.main:app --port 8000 &
+        STACK_NAME=${{ env.STACK_NAME }} uv run uvicorn gen_ai_on_aws.main:app --port 8000 &
         # Wait for the server to start
         sleep 5
         # Try to access the server
@@ -119,6 +147,9 @@ jobs:
 
   test-pulumi:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC auth with AWS
+      contents: read   # Required to checkout code
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -133,6 +164,11 @@ jobs:
       run: |
         cd provisioning
         uv sync
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Install Pulumi
       uses: pulumi/actions@v5
     - name: Test Pulumi configuration
@@ -143,9 +179,8 @@ jobs:
         pulumi stack init ci-test
         pulumi preview
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID || 'dummy-key-for-preview' }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY || 'dummy-secret-for-preview' }}
-        AWS_REGION: us-east-1
+        PULUMI_CONFIG_PASSPHRASE: "ci-test-passphrase"
+        AWS_REGION: ${{ env.AWS_DEFAULT_REGION }}
 
   build:
     runs-on: ubuntu-latest
