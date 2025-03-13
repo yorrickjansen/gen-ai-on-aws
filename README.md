@@ -43,6 +43,10 @@ graph TB
             metrics[CloudWatch Metrics]
         end
         
+        subgraph "GitHub Actions"
+            cicd[CI/CD Pipeline]
+        end
+        
     end
     
     subgraph "External Services"
@@ -76,14 +80,18 @@ graph TB
     lambda -->|Publish Metrics| metrics
     worker -->|Publish Metrics| metrics
     worker -->|Log Events| logs
+    cicd -->|Deploy| lambda
+    cicd -->|Deploy| worker
     
     classDef aws fill:#FF9900,stroke:#232F3E,color:white;
     classDef ext fill:#60A5FA,stroke:#2563EB,color:white;
     classDef app fill:#4ADE80,stroke:#16A34A,color:white;
+    classDef cicd fill:#F472B6,stroke:#DB2777,color:white;
     
     class api,lambda,worker,secrets,logs,metrics,sqs aws;
     class anthropic,langfuse ext;
     class app,litellm,mangum,routers,processor app;
+    class cicd cicd;
 ```
 
 ## Repository Structure
