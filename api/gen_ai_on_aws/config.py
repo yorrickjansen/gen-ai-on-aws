@@ -1,10 +1,11 @@
-import os
-import logging
-import boto3
 import json
+import logging
+import os
+
+import boto3
 import litellm
 from gen_ai_on_aws.types import LangFuseConfig
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,27 @@ except ImportError:
     VERSION = "local"
 
 
-MODEL = os.getenv("MODEL", "anthropic/claude-3-5-sonnet-20241022")
-STACK_NAME = os.environ["STACK_NAME"]
-FASTAPI_DEBUG = os.environ.get("FASTAPI_DEBUG", "false").lower() in ["1", "true", "yes"]
+class Settings(BaseSettings):
+    """Settings for the application."""
+
+    model: str = "anthropic/claude-3-5-sonnet-20241022"
+    stack_name: str
+    fastapi_debug: bool = False
+    anthropic_api_key_secret_name: str | None = None
+    langfuse_public_key_secret_name: str | None = None
+    langfuse_secret_key_secret_name: str | None = None
+    langfuse_host: str = "https://us.cloud.langfuse.com"
+    sqs_queue_url: str | None = None
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_nested_delimiter="__",
+        extra="ignore",
+    )
+
+
+settings = Settings()
 
 
 session = boto3.session.Session()
@@ -26,29 +45,31 @@ client = session.client(service_name="secretsmanager")
 
 def get_anthropic_api_key(stack_name: str) -> str:
     logger.info(f"Fetching API key for stack: {stack_name}")
-    secret_name = os.getenv(
-        "ANTHROPIC_API_KEY_SECRET_NAME", f"gen-ai-on-aws/{stack_name}/anthropic_api_key"
+    secret_name = (
+        settings.anthropic_api_key_secret_name
+        or f"gen-ai-on-aws/{stack_name}/anthropic_api_key"
     )
 
     try:
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     except Exception as e:
-        logger.error(f"Error fetching secret: {e}")
+        logger.error(f"Error fetching secret {secret_name}: {e}")
+        print(f"Error fetching secret {secret_name}: {e}")
         raise
 
     return json.loads(get_secret_value_response["SecretString"])["key"]
 
 
 def get_langfuse_config(stack_name: str) -> LangFuseConfig | None:
-    public_key_secret = os.getenv(
-        "LANGFUSE_PUBLIC_KEY_SECRET_NAME",
-        f"gen-ai-on-aws/{stack_name}/langfuse_public_key",
+    public_key_secret = (
+        settings.langfuse_public_key_secret_name
+        or f"gen-ai-on-aws/{stack_name}/langfuse_public_key"
     )
-    secret_key_secret = os.getenv(
-        "LANGFUSE_SECRET_KEY_SECRET_NAME",
-        f"gen-ai-on-aws/{stack_name}/langfuse_secret_key",
+    secret_key_secret = (
+        settings.langfuse_secret_key_secret_name
+        or f"gen-ai-on-aws/{stack_name}/langfuse_secret_key"
     )
-    host = os.getenv("LANGFUSE_HOST", "https://us.cloud.langfuse.com")
+    host = settings.langfuse_host
 
     session = boto3.session.Session()
     client = session.client(service_name="secretsmanager")
@@ -67,13 +88,13 @@ def get_langfuse_config(stack_name: str) -> LangFuseConfig | None:
         return None
 
 
-if anthropic_api_key := get_anthropic_api_key(stack_name=STACK_NAME):
+if anthropic_api_key := get_anthropic_api_key(stack_name=settings.stack_name):
     os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
 
 
 # configure langfuse is running inside AWS Lambda
 if os.environ.get("AWS_EXECUTION_ENV") is not None:
-    if langfuse_config := get_langfuse_config(stack_name=STACK_NAME):
+    if langfuse_config := get_langfuse_config(stack_name=settings.stack_name):
         os.environ["LANGFUSE_PUBLIC_KEY"] = langfuse_config.public_key
         os.environ["LANGFUSE_SECRET_KEY"] = langfuse_config.secret_key
         os.environ["LANGFUSE_HOST"] = langfuse_config.host

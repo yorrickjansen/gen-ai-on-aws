@@ -1,15 +1,9 @@
 import logging
-import os
-import litellm
-from fastapi import FastAPI
-from gen_ai_on_aws.config import (
-    get_anthropic_api_key,
-    get_langfuse_config,
-    FASTAPI_DEBUG,
-)
-from mangum import Mangum
-from gen_ai_on_aws.routers import router
 
+from fastapi import FastAPI
+from gen_ai_on_aws.config import settings
+from gen_ai_on_aws.routers import router
+from mangum import Mangum
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -20,12 +14,13 @@ logger.setLevel(logging.DEBUG)
 app = FastAPI(
     title="Gen AI on AWS",
     description="Generative AI on AWS",
-    debug=FASTAPI_DEBUG,
+    debug=settings.fastapi_debug,
     contact={
         "name": "Yorrick Jansen",
         "email": "info@yorrickjansen.com",
     },
 )
-handler = Mangum(app)
+
+handler = Mangum(app, lifespan="off", api_gateway_base_path="/stage")
 
 app.include_router(router)
