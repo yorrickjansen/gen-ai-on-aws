@@ -5,6 +5,7 @@ import os
 import iam
 import pulumi
 import pulumi_aws as aws
+from github_actions import create_github_actions_oidc_provider
 
 region = os.environ.get("AWS_DEFAULT_REGION")
 config = pulumi.Config()
@@ -234,3 +235,8 @@ pulumi.export("lambda_function_name", lambda_func.name)
 pulumi.export("sqs_queue_url", sqs_queue.url)
 if worker_code:
     pulumi.export("worker_lambda_function_name", worker_lambda.name)
+
+# Create GitHub Actions OIDC provider for CI/CD
+github_repo = config.get("github_repo")
+if github_repo:
+    create_github_actions_oidc_provider(github_repo)
