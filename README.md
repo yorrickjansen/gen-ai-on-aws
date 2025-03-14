@@ -227,7 +227,7 @@ The serverless architecture of this solution minimizes costs while maintaining s
 ### Run the FastAPI Server
 
 ```bash
-cd app
+cd api
 uv run uvicorn gen_ai_on_aws.main:app --reload
 ```
 
@@ -241,7 +241,7 @@ http POST http://0.0.0.0:8000/examples/extract-user \
 ### Running Tests
 
 ```bash
-cd app
+cd api
 uv run pytest                        # Run all tests
 uv run pytest -v                     # Verbose output
 uv run pytest --cov=gen_ai_on_aws    # Test coverage
