@@ -216,8 +216,9 @@ jobs:
         
   deploy:
     needs: build
-    # Only deploy if branch is main or feature/ci-cd
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd'
+    # Deploy on pushes to main/feature/ci-cd or PRs targeting main from feature/ci-cd
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd')) || 
+        (github.event_name == 'pull_request' && github.head_ref == 'feature/ci-cd')
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC auth with AWS
@@ -227,9 +228,17 @@ jobs:
       # Debug context
       - name: Debug GitHub context
         run: |
-          echo "Branch: ${{ github.ref }}"
           echo "Event name: ${{ github.event_name }}"
           echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Head ref (PR source): ${{ github.head_ref }}"
+          echo "Base ref (PR target): ${{ github.base_ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Is PR being merged: ${{ github.event.pull_request.merged == true }}"
+          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Is PR: ${{ github.event_name == 'pull_request' }}"
+          echo "Is push: ${{ github.event_name == 'push' }}"
       
       - uses: actions/checkout@v4
       
@@ -274,12 +283,22 @@ jobs:
       - name: Set environment
         id: set-env
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/feature/ci-cd" ]]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
+          # For PR events, use the head ref (source branch)
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ github.head_ref }}" == "feature/ci-cd" ]]; then
+              echo "environment=dev" >> $GITHUB_OUTPUT
+            else
+              echo "environment=unknown" >> $GITHUB_OUTPUT
+            fi
+          # For push events, use the ref (target branch)
           else
-            echo "environment=unknown" >> $GITHUB_OUTPUT
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "environment=dev" >> $GITHUB_OUTPUT
+            elif [[ "${{ github.ref }}" == "refs/heads/feature/ci-cd" ]]; then
+              echo "environment=dev" >> $GITHUB_OUTPUT
+            else
+              echo "environment=unknown" >> $GITHUB_OUTPUT
+            fi
           fi
           echo "Using environment: $(cat $GITHUB_OUTPUT)"
       
