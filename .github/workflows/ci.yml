@@ -1,13 +1,22 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feature/**' ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - demo
 
 env:
-  STACK_NAME: dev
   AWS_DEFAULT_REGION: us-east-1
 
 jobs:
@@ -61,7 +70,7 @@ jobs:
         cd api
         uv run pytest --cov=gen_ai_on_aws
       env:
-        STACK_NAME: ${{ env.STACK_NAME }}
+        STACK_NAME: dev
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
@@ -99,7 +108,7 @@ jobs:
         cd worker
         uv run pytest --cov=worker
       env:
-        STACK_NAME: ${{ env.STACK_NAME }}
+        STACK_NAME: dev
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
@@ -136,7 +145,7 @@ jobs:
       run: |
         cd api
         # Start FastAPI server in the background
-        STACK_NAME=${{ env.STACK_NAME }} AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }} uv run fastapi run gen_ai_on_aws/main.py --port 8000 &
+        STACK_NAME=dev AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }} uv run fastapi run gen_ai_on_aws/main.py --port 8000 &
         # Wait for the server to start (increased from 5 to 20 seconds)
         sleep 20
         # Try to access the server
@@ -214,12 +223,12 @@ jobs:
         path: worker/build/packages/worker-package-*.zip
         retention-days: 7
         
-  deploy:
+  deploy-dev:
     needs: build
-    # Deploy on pushes to main/feature/ci-cd or PRs targeting main from feature/ci-cd
-    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd')) || 
-        (github.event_name == 'pull_request' && github.head_ref == 'feature/ci-cd')
+    # Deploy to dev for all pushes/PRs (except manual workflow runs targeting demo)
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       id-token: write  # Required for OIDC auth with AWS
       contents: read   # Required to checkout the code
@@ -279,35 +288,102 @@ jobs:
           cd provisioning
           uv sync
       
-      # Determine environment based on branch
-      - name: Set environment
+      # Set environment stack name
+      - name: Set environment stack
         id: set-env
         run: |
-          # For PR events, use the head ref (source branch)
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ github.head_ref }}" == "feature/ci-cd" ]]; then
-              echo "environment=dev" >> $GITHUB_OUTPUT
-            else
-              echo "environment=unknown" >> $GITHUB_OUTPUT
-            fi
-          # For push events, use the ref (target branch)
-          else
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              echo "environment=dev" >> $GITHUB_OUTPUT
-            elif [[ "${{ github.ref }}" == "refs/heads/feature/ci-cd" ]]; then
-              echo "environment=dev" >> $GITHUB_OUTPUT
-            else
-              echo "environment=unknown" >> $GITHUB_OUTPUT
-            fi
-          fi
-          echo "Using environment: $(cat $GITHUB_OUTPUT)"
+          # For this job, always use dev stack
+          echo "stack_name=dev" >> $GITHUB_OUTPUT
+          echo "Using stack: dev"
       
       # Deploy with Pulumi
       - name: Deploy with Pulumi
         uses: pulumi/actions@v6
         with:
           command: up
-          stack-name: yorrickjansen/${{ steps.set-env.outputs.environment || 'dev' }}
+          # no current project found, pass the fully qualified stack name (org/project/stack)
+          stack-name: yorrickjansen/gen-ai-on-aws/${{ steps.set-env.outputs.stack_name }}
+          args: '-y'
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      
+      # Verify deployment
+      - name: Test deployed API endpoint
+        if: ${{ success() }}
+        run: |
+          cd provisioning
+          ENDPOINT=$(pulumi stack output apigateway-rest-endpoint)
+          curl -f "${ENDPOINT}/examples/hello" || exit 1
+          
+  # Production deployment job - only runs on manual workflow dispatch         
+  deploy-demo:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'demo'
+    runs-on: ubuntu-latest
+    environment: demo
+    permissions:
+      id-token: write  # Required for OIDC auth with AWS
+      contents: read   # Required to checkout the code
+    
+    steps:
+      - name: Debug GitHub context
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Selected environment: ${{ github.event.inputs.environment }}"
+      
+      - uses: actions/checkout@v4
+      
+      # Configure AWS credentials using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: ${{ secrets.AWS_REGION || env.AWS_DEFAULT_REGION }}
+      
+      # Download artifacts from build job
+      - name: Download API package
+        uses: actions/download-artifact@v4
+        with:
+          name: api-package
+          path: api/build/packages/
+      
+      - name: Download worker package
+        uses: actions/download-artifact@v4
+        with:
+          name: worker-package
+          path: worker/build/packages/
+      
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      # Install uv and dependencies
+      - name: Install uv
+        run: |
+          pip install --upgrade pip
+          pip install uv
+      
+      - name: Install dependencies
+        run: |
+          cd provisioning
+          uv sync
+      
+      # Set environment stack name (production)
+      - name: Set environment stack
+        id: set-env
+        run: |
+          echo "stack_name=demo" >> $GITHUB_OUTPUT
+          echo "Using stack: demo"
+      
+      # Deploy with Pulumi
+      - name: Deploy with Pulumi
+        uses: pulumi/actions@v6
+        with:
+          command: up
+          stack-name: yorrickjansen/${{ steps.set-env.outputs.stack_name }}
           args: '-y'
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
