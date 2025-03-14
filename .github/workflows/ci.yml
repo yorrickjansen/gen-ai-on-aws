@@ -321,7 +321,7 @@ jobs:
         run: |
           cd provisioning
           ENDPOINT=$(pulumi stack output apigatewayv2-http-endpoint)
-          curl -f "${ENDPOINT}/examples/hello" || exit 1
+          curl -f "${ENDPOINT}examples/hello" || exit 1
           
   # Production deployment job - only runs on manual workflow dispatch         
   deploy-demo:
@@ -405,4 +405,4 @@ jobs:
         run: |
           cd provisioning
           ENDPOINT=$(pulumi stack output apigatewayv2-http-endpoint)
-          curl -f "${ENDPOINT}/examples/hello" || exit 1
+          curl -f "${ENDPOINT}examples/hello" || exit 1
