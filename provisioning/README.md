@@ -39,14 +39,12 @@ Use a HTTP tool like `curl` or [`httpie`](https://github.com/httpie/httpie) (`pi
 Example using `curl`:
 
 ```
-curl $(pulumi stack output apigateway-rest-endpoint)
 curl $(pulumi stack output apigatewayv2-http-endpoint)
 ```
 
 Example using `httpie`:
 
 ```
-http $(pulumi stack output apigateway-rest-endpoint)
 http $(pulumi stack output apigatewayv2-http-endpoint)
 ```
 

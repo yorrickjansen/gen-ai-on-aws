@@ -181,7 +181,7 @@ uv run pulumi up -y
 ### 6. Test the Deployment
 
 ```bash
-http POST $(pulumi stack output apigateway-rest-endpoint)"/examples/extract-user" \
+http POST $(pulumi stack output apigatewayv2-http-endpoint)"/examples/extract-user" \
   text="My name is Bob, I am 40 years old"
 ```
 

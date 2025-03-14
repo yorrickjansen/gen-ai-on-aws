@@ -320,7 +320,7 @@ jobs:
         if: ${{ success() }}
         run: |
           cd provisioning
-          ENDPOINT=$(pulumi stack output apigateway-rest-endpoint)
+          ENDPOINT=$(pulumi stack output apigatewayv2-http-endpoint)
           curl -f "${ENDPOINT}/examples/hello" || exit 1
           
   # Production deployment job - only runs on manual workflow dispatch         
@@ -404,5 +404,5 @@ jobs:
         if: ${{ success() }}
         run: |
           cd provisioning
-          ENDPOINT=$(pulumi stack output apigateway-rest-endpoint)
+          ENDPOINT=$(pulumi stack output apigatewayv2-http-endpoint)
           curl -f "${ENDPOINT}/examples/hello" || exit 1
