@@ -1,5 +1,8 @@
 # GenAI on AWS
 
+[![CI](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws/branch/main/graph/badge.svg)](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws)
+
 A production-ready GenAI application framework on AWS using a serverless architecture.
 
 ## Overview
@@ -24,14 +27,24 @@ graph TB
         
         subgraph "AWS Lambda"
             lambda[Lambda Function<br>Python 3.13]
+            worker[Worker Lambda<br>Async Processing]
         end
         
         subgraph "AWS Secrets Manager"
             secrets[Secrets Manager<br>API Keys]
         end
         
+        subgraph "AWS SQS"
+            sqs[SQS Queue<br>Async Requests]
+        end
+        
         subgraph "CloudWatch"
             logs[CloudWatch Logs]
+            metrics[CloudWatch Metrics]
+        end
+        
+        subgraph "GitHub Actions"
+            cicd[CI/CD Pipeline]
         end
     end
     
@@ -45,6 +58,7 @@ graph TB
         litellm[LiteLLM<br>Model Integration]
         mangum[Mangum<br>AWS Lambda Handler]
         routers[FastAPI Routers<br>Endpoints]
+        processor[Worker Processor<br>Async LLM Processing]
     end
     
     client[Client] -->|HTTP Request| api
@@ -52,19 +66,31 @@ graph TB
     lambda -->|Log Events| logs
     lambda -->|Process Request| app
     app -->|Route Request| routers
-    routers -->|LLM Request| litellm
+    routers -->|Sync LLM Request| litellm
+    routers -->|Async Request| sqs
+    sqs -->|Trigger| worker
+    worker -->|Process Message| processor
+    processor -->|LLM Request| litellm
     litellm -->|LLM Call| anthropic
     lambda -->|Fetch API Keys| secrets
+    worker -->|Fetch API Keys| secrets
     litellm -->|Trace LLM Calls| langfuse
     app -->|AWS Lambda Integration| mangum
+    lambda -->|Publish Metrics| metrics
+    worker -->|Publish Metrics| metrics
+    worker -->|Log Events| logs
+    cicd -->|Deploy| lambda
+    cicd -->|Deploy| worker
     
     classDef aws fill:#FF9900,stroke:#232F3E,color:white;
     classDef ext fill:#60A5FA,stroke:#2563EB,color:white;
     classDef app fill:#4ADE80,stroke:#16A34A,color:white;
+    classDef cicd fill:#F472B6,stroke:#DB2777,color:white;
     
-    class api,lambda,secrets,logs aws;
+    class api,lambda,worker,secrets,logs,metrics,sqs aws;
     class anthropic,langfuse ext;
-    class app,litellm,mangum,routers app;
+    class app,litellm,mangum,routers,processor app;
+    class cicd cicd;
 ```
 
 ## Repository Structure
@@ -178,6 +204,22 @@ aws secretsmanager create-secret \
   --name "gen-ai-on-aws/$PULUMI_STACK/langfuse_secret_key"
 ```
 
+## Cost Considerations
+
+The serverless architecture of this solution minimizes costs while maintaining scalability:
+
+| AWS Service | Cost Factors | Optimization |
+|-------------|--------------|--------------|
+| Lambda | $0.0000166667/GB-s, $0.20/1M requests | 128MB-256MB memory, cold start <100ms |
+| API Gateway | $1.00/1M requests | HTTP API is cheaper than REST API |
+| SQS | $0.40/1M requests | Standard queue for most use cases |
+| Secrets Manager | $0.40/secret/month, $0.05/10K API calls | Reuse secrets across environments |
+| CloudWatch | $0.30/GB ingest, $0.03/1M metrics | Filter logs, adjust retention |
+
+**Estimated Monthly Cost (low-volume):**
+* 100K requests: ~$1-3/month + LLM API costs
+* No always-on resources means no idle costs
+
 ## Local Development
 
 ### Run the FastAPI Server
@@ -217,7 +259,7 @@ uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.
 - ✅ Unit testing
 - ✅ Architecture diagram
 - ✅ SQS queue and worker processing
-- ⬜ CI/CD with GitHub Actions
+- ✅ CI/CD with GitHub Actions
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration
