@@ -50,6 +50,7 @@ jobs:
 
   test-api:
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       id-token: write  # Required for OIDC auth with AWS
       contents: read   # Required to checkout code
@@ -164,6 +165,7 @@ jobs:
 
   test-pulumi:
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       id-token: write  # Required for OIDC auth with AWS
       contents: read   # Required to checkout code
