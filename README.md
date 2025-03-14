@@ -1,6 +1,6 @@
 # GenAI on AWS
 
-[![CI](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml)
+[![CI/CD Pipeline](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws/branch/main/graph/badge.svg)](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws)
 
 A production-ready GenAI application framework on AWS using a serverless architecture, for minimal maintenance & cost, and maximum scalability.
@@ -105,6 +105,7 @@ graph TB
 - `provisioning/` - Pulumi IaC for AWS resources
 - `specs/` - AI Coding prompt
 - `ai-docs/` - Reference documentation for AI coding, scraped with Firecrawl MCP (Model Context Protocol)
+- `.github/workflows/` - CI/CD pipeline configurations
 
 Each directory has its own dependency set (pyproject.toml). Root dependencies enforce consistent standards across the repository.
 
@@ -251,6 +252,39 @@ Generate HTML coverage report:
 uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.html
 ```
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment with environment-specific configurations:
+
+### Pipeline Overview
+
+1. **Triggers:**
+   - Automatically runs on push to main branch
+   - Automatically runs on pull requests to main branch
+   - Manual trigger via workflow dispatch with environment selection (dev/demo)
+
+2. **Jobs and Stages:**
+   - **Lint:** Code quality checks with ruff
+   - **Test API:** API unit tests with pytest and codecov integration
+   - **Test Worker:** Worker unit tests with pytest
+   - **Test API Start:** Verifies API can start and serve requests
+   - **Test Pulumi:** Tests infrastructure code with Pulumi
+   - **Build:** Creates Lambda deployment packages for API and worker
+   - **Deploy Dev:** Deploys to dev environment (auto for PRs/pushes)
+   - **Deploy Demo:** Deploys to demo environment (only via manual trigger)
+
+3. **AWS Authentication:**
+   - Uses OIDC (OpenID Connect) for secure authentication to AWS
+   - Environment-specific AWS account IDs for multi-account deployments
+   - IAM role "github-actions" with controlled permissions
+
+4. **Environment Configuration:**
+   - Environment-specific secrets for AWS credentials and API keys
+   - GitHub Environments for "dev" and "demo" with appropriate protection rules
+   - Pulumi stacks named after environments for infrastructure management
+
+See the [CI/CD workflow file](.github/workflows/ci.yml) for detailed configuration.
+
 ## Roadmap
 
 - ✅ FastAPI application with routers
@@ -274,3 +308,15 @@ uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.
 ## License
 
 See the [LICENSE](LICENSE) file for details.
+
+
+
+
+
+
+
+
+
+TODO
+ - check manual trigger for demo
+ - setup codecov

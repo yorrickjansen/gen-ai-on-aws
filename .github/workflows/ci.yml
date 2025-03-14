@@ -88,6 +88,7 @@ jobs:
 
   test-worker:
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       id-token: write  # Required for OIDC auth with AWS
       contents: read   # Required to checkout code
@@ -126,6 +127,7 @@ jobs:
 
   test-api-start:
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       id-token: write  # Required for OIDC auth with AWS
       contents: read   # Required to checkout code
