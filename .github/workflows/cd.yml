@@ -5,6 +5,13 @@ on:
     workflows: ["CI"]
     types:
       - completed
+    branches:
+      - main
+      - 'feature/ci-cd'
+  push:
+    branches:
+      - main
+      - 'feature/ci-cd'
   workflow_dispatch:  # Allow manual triggering
 
 # Define environment-specific variables
@@ -36,8 +43,12 @@ jobs:
 
   deploy:
     needs: determine-environment
-    # Only run if environment is known and CI workflow succeeded
-    if: needs.determine-environment.outputs.environment != 'unknown' && (github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch')
+    # Only run if environment is known and (CI workflow succeeded or direct push)
+    if: >
+      needs.determine-environment.outputs.environment != 'unknown' && 
+      (github.event_name == 'push' || 
+       github.event_name == 'workflow_dispatch' || 
+       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))
     runs-on: ubuntu-latest
     # Use the determined environment
     environment: ${{ needs.determine-environment.outputs.environment }}
@@ -46,6 +57,15 @@ jobs:
       contents: read   # Required to checkout the code
     
     steps:
+      # Debug GitHub context
+      - name: Debug GitHub context
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Head branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub ref_name: ${{ github.ref_name }}"
+          
       - uses: actions/checkout@v4
       
       # Debug AWS Account ID
@@ -60,18 +80,41 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
           aws-region: ${{ secrets.AWS_REGION }}
       
-      # Download artifacts from CI workflow
-      - name: Download API package
-        uses: actions/download-artifact@v4
+      # For workflow_run events - download artifacts from workflow
+      - name: Download artifacts from workflow (workflow_run)
+        if: github.event_name == 'workflow_run'
+        uses: dawidd6/action-download-artifact@v2
         with:
-          name: api-package
-          path: api/build/packages/
-      
-      - name: Download worker package
-        uses: actions/download-artifact@v4
-        with:
-          name: worker-package
-          path: worker/build/packages/
+          workflow: CI
+          workflow_conclusion: success
+          branch: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+          path: artifacts
+
+      # For push and workflow_dispatch - build Lambda packages
+      - name: Build Lambda packages (push or workflow_dispatch)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          chmod +x ./build_lambda_packages.sh
+          ./build_lambda_packages.sh
+
+      # Move or verify artifacts
+      - name: Organize artifacts
+        run: |
+          # Create directories first
+          mkdir -p api/build/packages/
+          mkdir -p worker/build/packages/
+          
+          # For workflow_run, move the downloaded artifacts
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            mv artifacts/api-package/* api/build/packages/ || echo "No API package found"
+            mv artifacts/worker-package/* worker/build/packages/ || echo "No worker package found"
+          fi
+          
+          # Verify packages exist
+          echo "API packages:"
+          ls -la api/build/packages/
+          echo "Worker packages:"
+          ls -la worker/build/packages/
       
       # Set up Python
       - name: Set up Python
