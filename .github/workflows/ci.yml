@@ -391,9 +391,9 @@ jobs:
         with:
           command: up
           stack-name: yorrickjansen/${{ steps.set-env.outputs.stack_name }}
-          args: '-y'
           color: always
-          work-dir: provisioning
+          refresh: true
+          work-dir: ./provisioning
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       
