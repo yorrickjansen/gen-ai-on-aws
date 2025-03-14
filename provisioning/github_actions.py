@@ -42,6 +42,7 @@ def create_github_actions_oidc_provider(
     # Create a role that can be assumed by GitHub Actions
     github_actions_role = aws.iam.Role(
         "github-actions-role",
+        name="github-actions",
         assume_role_policy=pulumi.Output.all(github_actions_provider.arn).apply(
             lambda args: json.dumps(
                 {
