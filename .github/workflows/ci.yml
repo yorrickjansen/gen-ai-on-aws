@@ -175,6 +175,7 @@ jobs:
       uses: pulumi/actions@v5
     - name: Test Pulumi configuration
       run: |
+        ./build_lambda_packages.sh
         cd provisioning
         pulumi login --local
         export PULUMI_CONFIG_PASSPHRASE="ci-test-passphrase"
