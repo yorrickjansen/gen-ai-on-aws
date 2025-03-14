@@ -325,7 +325,7 @@ jobs:
           
   # Production deployment job - only runs on manual workflow dispatch         
   deploy-demo:
-    needs: deploy-dev
+    needs: build
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'demo'
     runs-on: ubuntu-latest
     environment: demo
