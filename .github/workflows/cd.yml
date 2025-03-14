@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main  # Deploy to dev on push to main
-      - 'releases/demo'  # Deploy to demo (prod) on push to releases/demo
+      - 'feature/ci-cd'  # Deploy to demo (prod) on push to releases/demo
   workflow_dispatch:  # Allow manual triggering
 
 # Define environment-specific variables
