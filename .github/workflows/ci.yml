@@ -1,8 +1,10 @@
 name: CI/CD Pipeline
 
 on:
+  # Only trigger on pushes to main
   push:
-    branches: [ main, 'feature/**' ]
+    branches: [ main ]
+  # For feature branches, only use PR events
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -18,6 +20,11 @@ on:
 
 env:
   AWS_DEFAULT_REGION: us-east-1
+
+# Ensure only one workflow per PR/branch by canceling in-progress runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
@@ -225,7 +232,7 @@ jobs:
         
   deploy-dev:
     needs: build
-    # Deploy to dev for all pushes/PRs (except manual workflow runs targeting demo)
+    # Deploy to dev for all eligible events except manual workflow runs targeting demo
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     environment: dev
@@ -317,7 +324,7 @@ jobs:
           
   # Production deployment job - only runs on manual workflow dispatch         
   deploy-demo:
-    needs: build
+    needs: deploy-dev
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'demo'
     runs-on: ubuntu-latest
     environment: demo
@@ -385,6 +392,8 @@ jobs:
           command: up
           stack-name: yorrickjansen/${{ steps.set-env.outputs.stack_name }}
           args: '-y'
+          color: always
+          work-dir: provisioning
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       
