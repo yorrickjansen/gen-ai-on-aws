@@ -47,11 +47,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      # Debug AWS Account ID
+      - name: Debug AWS Account ID
+        run: |
+          echo "Using AWS Account ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+      
       # Configure AWS credentials using OIDC
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
           aws-region: ${{ secrets.AWS_REGION }}
       
       # Download artifacts from CI workflow
