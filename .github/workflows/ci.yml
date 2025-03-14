@@ -310,7 +310,8 @@ jobs:
           command: up
           # no current project found, pass the fully qualified stack name (org/project/stack)
           stack-name: yorrickjansen/gen-ai-on-aws/${{ steps.set-env.outputs.stack_name }}
-          args: '-y'
+          work-dir: ./provisioning
+          refresh: true
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       
@@ -390,12 +391,13 @@ jobs:
         uses: pulumi/actions@v6
         with:
           command: up
-          stack-name: yorrickjansen/${{ steps.set-env.outputs.stack_name }}
-          color: always
-          refresh: true
+          # no current project found, pass the fully qualified stack name (org/project/stack)
+          stack-name: yorrickjansen/gen-ai-on-aws/${{ steps.set-env.outputs.stack_name }}
           work-dir: ./provisioning
+          refresh: true
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      
       
       # Verify deployment
       - name: Test deployed API endpoint
