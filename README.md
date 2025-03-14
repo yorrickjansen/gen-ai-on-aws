@@ -1,9 +1,6 @@
 # GenAI on AWS
 
-[![CI](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws/branch/main/graph/badge.svg)](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws)
-
-A production-ready GenAI application framework on AWS using a serverless architecture.
+A production-ready GenAI application framework on AWS using a serverless architecture, for minimal maintenance & cost, and maximum scalability.
 
 ## Overview
 
@@ -43,9 +40,6 @@ graph TB
             metrics[CloudWatch Metrics]
         end
         
-        subgraph "GitHub Actions"
-            cicd[CI/CD Pipeline]
-        end
     end
     
     subgraph "External Services"
@@ -79,18 +73,14 @@ graph TB
     lambda -->|Publish Metrics| metrics
     worker -->|Publish Metrics| metrics
     worker -->|Log Events| logs
-    cicd -->|Deploy| lambda
-    cicd -->|Deploy| worker
     
     classDef aws fill:#FF9900,stroke:#232F3E,color:white;
     classDef ext fill:#60A5FA,stroke:#2563EB,color:white;
     classDef app fill:#4ADE80,stroke:#16A34A,color:white;
-    classDef cicd fill:#F472B6,stroke:#DB2777,color:white;
     
     class api,lambda,worker,secrets,logs,metrics,sqs aws;
     class anthropic,langfuse ext;
     class app,litellm,mangum,routers,processor app;
-    class cicd cicd;
 ```
 
 ## Repository Structure
@@ -264,6 +254,7 @@ uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration
 - ⬜ RAG with Aurora PostgreSQL
+- ⬜ Custom domain name, SSL certificate, IP whitelisting, usage plans to restrict access to API
 - ⬜ Monitoring and alerts, with optional integration with Incidents Manager / Pager Duty
 - ⬜ Lambda layers optimization for faster deployments
 - ⬜ Progressive deployments for improved reliability in production (using CodeDeploy, triggered from GH Actions)
