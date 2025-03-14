@@ -140,8 +140,8 @@ jobs:
         cd api
         # Start FastAPI server in the background
         STACK_NAME=${{ env.STACK_NAME }} AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }} uv run fastapi run gen_ai_on_aws/main.py --port 8000 &
-        # Wait for the server to start
-        sleep 5
+        # Wait for the server to start (increased from 5 to 20 seconds)
+        sleep 20
         # Try to access the server
         curl -f http://localhost:8000/docs || exit 1
         # Kill the server
