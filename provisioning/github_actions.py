@@ -1,14 +1,13 @@
 """Provisioning resources for GitHub Actions OIDC integration."""
 
 import json
-from typing import List
 
 import pulumi
 import pulumi_aws as aws
 
 
 def create_github_actions_oidc_provider(
-    github_repo: str, allowed_branches: List[str] = ["main", "releases/demo"]
+    github_repo: str,
 ) -> aws.iam.OpenIdConnectProvider:
     """Create an OIDC provider for GitHub Actions.
 
@@ -31,11 +30,11 @@ def create_github_actions_oidc_provider(
     condition_json = json.dumps(
         {
             "StringLike": {
-                "token.actions.githubusercontent.com:sub": [
-                    f"repo:{github_repo}:ref:refs/heads/{branch}"
-                    for branch in allowed_branches
-                ]
-            }
+                "token.actions.githubusercontent.com:sub": f"repo:{github_repo}:*"
+            },
+            "StringEquals": {
+                "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+            },
         }
     )
 
