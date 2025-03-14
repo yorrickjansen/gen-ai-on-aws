@@ -216,14 +216,16 @@ uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.
 - ✅ LangFuse tracing
 - ✅ Unit testing
 - ✅ Architecture diagram
-- ⬜ SQS queue and worker processing
-- ⬜ LLM chain/pattern examples
-- ⬜ RAG with Aurora PostgreSQL
-- ⬜ Enhanced monitoring and alarms
+- ✅ SQS queue and worker processing
 - ⬜ CI/CD with GitHub Actions
-- ⬜ Lambda layers optimization
-- ⬜ Progressive deployments
-- ⬜ Frontend implementation
+- ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
+- ⬜ LLM chain/pattern examples
+- ⬜ Demo of n8n integration
+- ⬜ RAG with Aurora PostgreSQL
+- ⬜ Monitoring and alerts, with optional integration with Incidents Manager / Pager Duty
+- ⬜ Lambda layers optimization for faster deployments
+- ⬜ Progressive deployments for improved reliability in production (using CodeDeploy, triggered from GH Actions)
+- ⬜ Frontend implementation for demo (optional websocket push)
 
 ## License
 
