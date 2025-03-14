@@ -76,7 +76,7 @@ jobs:
     - name: Run API tests
       run: |
         cd api
-        uv run pytest --cov=gen_ai_on_aws
+        uv run pytest --cov=gen_ai_on_aws && uv run coverage xml
       env:
         STACK_NAME: dev
     - name: Upload coverage to Codecov
@@ -115,7 +115,7 @@ jobs:
     - name: Run worker tests
       run: |
         cd worker
-        uv run pytest --cov=worker
+        uv run pytest --cov=worker && uv run coverage xml
       env:
         STACK_NAME: dev
     - name: Upload coverage to Codecov
