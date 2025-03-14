@@ -1,10 +1,10 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - main  # Deploy to dev on push to main
-      - 'feature/ci-cd'  # Deploy to demo (prod) on push to releases/demo
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
   workflow_dispatch:  # Allow manual triggering
 
 # Define environment-specific variables
@@ -27,8 +27,8 @@ jobs:
         run: |
           if [[ $GITHUB_REF == "refs/heads/main" ]]; then
             echo "environment=dev" >> $GITHUB_OUTPUT
-          elif [[ $GITHUB_REF == "refs/heads/releases/demo" ]]; then
-            echo "environment=demo" >> $GITHUB_OUTPUT
+          elif [[ $GITHUB_REF == "refs/heads/feature/ci-cd" ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
           else
             echo "environment=unknown" >> $GITHUB_OUTPUT
             echo "No deployment will be triggered for this branch"
@@ -36,8 +36,8 @@ jobs:
 
   deploy:
     needs: determine-environment
-    # Only run if environment is known
-    if: needs.determine-environment.outputs.environment != 'unknown'
+    # Only run if environment is known and CI workflow succeeded
+    if: needs.determine-environment.outputs.environment != 'unknown' && (github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     # Use the determined environment
     environment: ${{ needs.determine-environment.outputs.environment }}
