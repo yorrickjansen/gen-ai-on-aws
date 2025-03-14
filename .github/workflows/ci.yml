@@ -51,9 +51,6 @@ jobs:
       run: |
         cd api
         uv sync
-    - name: Debug AWS Account ID
-      run: |
-        echo "Using AWS Account ID: ${{ secrets.AWS_ACCOUNT_ID }}"
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -216,3 +213,90 @@ jobs:
         name: worker-package
         path: worker/build/packages/worker-package-*.zip
         retention-days: 7
+        
+  deploy:
+    needs: build
+    # Only deploy if branch is main or feature/ci-cd
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/ci-cd'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC auth with AWS
+      contents: read   # Required to checkout the code
+    
+    steps:
+      # Debug context
+      - name: Debug GitHub context
+        run: |
+          echo "Branch: ${{ github.ref }}"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+      
+      - uses: actions/checkout@v4
+      
+      # Configure AWS credentials using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: ${{ secrets.AWS_REGION || env.AWS_DEFAULT_REGION }}
+      
+      # Download artifacts from build job
+      - name: Download API package
+        uses: actions/download-artifact@v4
+        with:
+          name: api-package
+          path: api/build/packages/
+      
+      - name: Download worker package
+        uses: actions/download-artifact@v4
+        with:
+          name: worker-package
+          path: worker/build/packages/
+      
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      # Install uv and dependencies
+      - name: Install uv
+        run: |
+          pip install --upgrade pip
+          pip install uv
+      
+      - name: Install dependencies
+        run: |
+          cd provisioning
+          uv sync
+      
+      # Determine environment based on branch
+      - name: Set environment
+        id: set-env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/feature/ci-cd" ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          else
+            echo "environment=unknown" >> $GITHUB_OUTPUT
+          fi
+          echo "Using environment: $(cat $GITHUB_OUTPUT)"
+      
+      # Deploy with Pulumi
+      - name: Deploy with Pulumi
+        uses: pulumi/actions@v6
+        with:
+          command: up
+          stack-name: yorrickjansen/${{ steps.set-env.outputs.environment || 'dev' }}
+          args: '-y'
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      
+      # Verify deployment
+      - name: Test deployed API endpoint
+        if: ${{ success() }}
+        run: |
+          cd provisioning
+          ENDPOINT=$(pulumi stack output apigateway-rest-endpoint)
+          curl -f "${ENDPOINT}/examples/hello" || exit 1
