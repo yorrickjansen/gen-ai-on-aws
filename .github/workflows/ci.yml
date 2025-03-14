@@ -139,7 +139,7 @@ jobs:
       run: |
         cd api
         # Start FastAPI server in the background
-        STACK_NAME=${{ env.STACK_NAME }} uv run fastapi run gen_ai_on_aws/main.py --reload --port 8000 &
+        STACK_NAME=${{ env.STACK_NAME }} AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }} uv run fastapi run gen_ai_on_aws/main.py --port 8000 &
         # Wait for the server to start
         sleep 5
         # Try to access the server
