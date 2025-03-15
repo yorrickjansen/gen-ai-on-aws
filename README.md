@@ -20,77 +20,40 @@ This repository provides a complete solution for deploying GenAI applications on
 
 ```mermaid
 graph TB
-    subgraph "AWS Cloud"
-        subgraph "API Gateway"
-            api[API Gateway REST/HTTP API]
-        end
-        
-        subgraph "AWS Lambda"
-            lambda[Lambda Function<br>Python 3.13]
-            worker[Worker Lambda<br>Async Processing]
-        end
-        
-        subgraph "AWS Secrets Manager"
-            secrets[Secrets Manager<br>API Keys]
-        end
-        
-        subgraph "AWS SQS"
-            sqs[SQS Queue<br>Async Requests]
-        end
-        
-        subgraph "CloudWatch"
-            logs[CloudWatch Logs]
-            metrics[CloudWatch Metrics]
-        end
-        
-        subgraph "GitHub Actions"
-            cicd[CI/CD Pipeline]
-        end
-        
-    end
+    %% Main components
+    client[Client]
+    api[API Gateway]
+    lambda[API Lambda<br>FastAPI]
+    worker[Worker Lambda]
+    sqs[SQS Queue]
+    secrets[Secrets Manager]
+    llm[LLM APIs<br>Claude/Bedrock]
+    observe[LangFuse<br>Observability]
+    cicd[GitHub Actions<br>CI/CD]
     
-    subgraph "External Services"
-        anthropic[Anthropic API<br>Claude Models]
-        langfuse[LangFuse<br>Observability]
-    end
-    
-    subgraph "Application Components"
-        app[FastAPI Application]
-        litellm[LiteLLM<br>Model Integration]
-        mangum[Mangum<br>AWS Lambda Handler]
-        routers[FastAPI Routers<br>Endpoints]
-        processor[Worker Processor<br>Async LLM Processing]
-    end
-    
-    client[Client] -->|HTTP Request| api
-    api -->|Forward Request| lambda
-    lambda -->|Log Events| logs
-    lambda -->|Process Request| app
-    app -->|Route Request| routers
-    routers -->|Sync LLM Request| litellm
-    routers -->|Async Request| sqs
+    %% Flow
+    client -->|HTTP Request| api
+    api -->|Forward| lambda
+    lambda -->|Sync Request| llm
+    lambda -->|Async Request| sqs
     sqs -->|Trigger| worker
-    worker -->|Process Message| processor
-    processor -->|LLM Request| litellm
-    litellm -->|LLM Call| anthropic
-    lambda -->|Fetch API Keys| secrets
-    worker -->|Fetch API Keys| secrets
-    litellm -->|Trace LLM Calls| langfuse
-    app -->|AWS Lambda Integration| mangum
-    lambda -->|Publish Metrics| metrics
-    worker -->|Publish Metrics| metrics
-    worker -->|Log Events| logs
-    cicd -->|Deploy| lambda
-    cicd -->|Deploy| worker
+    worker -->|Process| llm
     
+    %% Auxiliary connections
+    lambda -.->|Fetch Keys| secrets
+    worker -.->|Fetch Keys| secrets
+    lambda -.->|Traces| observe
+    worker -.->|Traces| observe
+    cicd -.->|Deploy| lambda
+    cicd -.->|Deploy| worker
+    
+    %% Styling
     classDef aws fill:#FF9900,stroke:#232F3E,color:white;
     classDef ext fill:#60A5FA,stroke:#2563EB,color:white;
-    classDef app fill:#4ADE80,stroke:#16A34A,color:white;
     classDef cicd fill:#F472B6,stroke:#DB2777,color:white;
     
-    class api,lambda,worker,secrets,logs,metrics,sqs aws;
-    class anthropic,langfuse ext;
-    class app,litellm,mangum,routers,processor app;
+    class api,lambda,worker,sqs,secrets aws;
+    class llm,observe ext;
     class cicd cicd;
 ```
 
@@ -321,15 +284,17 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ✅ SQS queue and worker processing
 - ✅ CI/CD with GitHub Actions
 - ✅ Codecov integration
-- ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration
+- ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ RAG with Aurora PostgreSQL
+- ⬜ PII data handling (log retention, masking, etc.)
 - ⬜ Custom domain name, SSL certificate, IP whitelisting, usage plans to restrict access to API
-- ⬜ Monitoring and alerts, with optional integration with Incidents Manager / Pager Duty
+- ⬜ Monitoring, alerts, tracing, backups, with optional integration with Incidents Manager / Pager Duty
 - ⬜ Lambda layers optimization for faster deployments
 - ⬜ Progressive deployments for improved reliability in production (using CodeDeploy, triggered from GH Actions)
 - ⬜ Frontend implementation for demo (optional websocket push)
+- ⬜ Scaling configuration for Lambda functions (concurrency, memory, timeout)
 
 ## License
 
