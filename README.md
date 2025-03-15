@@ -1,5 +1,8 @@
 # GenAI on AWS
 
+[![CI/CD Pipeline](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/yorrickjansen/gen-ai-on-aws/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws/branch/main/graph/badge.svg)](https://codecov.io/gh/yorrickjansen/gen-ai-on-aws)
+
 A production-ready GenAI application framework on AWS using a serverless architecture, for minimal maintenance & cost, and maximum scalability.
 
 ## Overview
@@ -40,6 +43,10 @@ graph TB
             metrics[CloudWatch Metrics]
         end
         
+        subgraph "GitHub Actions"
+            cicd[CI/CD Pipeline]
+        end
+        
     end
     
     subgraph "External Services"
@@ -73,14 +80,18 @@ graph TB
     lambda -->|Publish Metrics| metrics
     worker -->|Publish Metrics| metrics
     worker -->|Log Events| logs
+    cicd -->|Deploy| lambda
+    cicd -->|Deploy| worker
     
     classDef aws fill:#FF9900,stroke:#232F3E,color:white;
     classDef ext fill:#60A5FA,stroke:#2563EB,color:white;
     classDef app fill:#4ADE80,stroke:#16A34A,color:white;
+    classDef cicd fill:#F472B6,stroke:#DB2777,color:white;
     
     class api,lambda,worker,secrets,logs,metrics,sqs aws;
     class anthropic,langfuse ext;
     class app,litellm,mangum,routers,processor app;
+    class cicd cicd;
 ```
 
 ## Repository Structure
@@ -94,6 +105,7 @@ graph TB
 - `provisioning/` - Pulumi IaC for AWS resources
 - `specs/` - AI Coding prompt
 - `ai-docs/` - Reference documentation for AI coding, scraped with Firecrawl MCP (Model Context Protocol)
+- `.github/workflows/` - CI/CD pipeline configurations
 
 Each directory has its own dependency set (pyproject.toml). Root dependencies enforce consistent standards across the repository.
 
@@ -170,7 +182,7 @@ uv run pulumi up -y
 ### 6. Test the Deployment
 
 ```bash
-http POST $(pulumi stack output apigateway-rest-endpoint)"/examples/extract-user" \
+http POST $(pulumi stack output apigatewayv2-http-endpoint)"/examples/extract-user" \
   text="My name is Bob, I am 40 years old"
 ```
 
@@ -215,7 +227,7 @@ The serverless architecture of this solution minimizes costs while maintaining s
 ### Run the FastAPI Server
 
 ```bash
-cd app
+cd api
 uv run uvicorn gen_ai_on_aws.main:app --reload
 ```
 
@@ -229,7 +241,7 @@ http POST http://0.0.0.0:8000/examples/extract-user \
 ### Running Tests
 
 ```bash
-cd app
+cd api
 uv run pytest                        # Run all tests
 uv run pytest -v                     # Verbose output
 uv run pytest --cov=gen_ai_on_aws    # Test coverage
@@ -239,6 +251,39 @@ Generate HTML coverage report:
 ```bash
 uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.html
 ```
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment with environment-specific configurations:
+
+### Pipeline Overview
+
+1. **Triggers:**
+   - Automatically runs on push to main branch
+   - Automatically runs on pull requests to main branch
+   - Manual trigger via workflow dispatch with environment selection (dev/demo)
+
+2. **Jobs and Stages:**
+   - **Lint:** Code quality checks with ruff
+   - **Test API:** API unit tests with pytest and codecov integration
+   - **Test Worker:** Worker unit tests with pytest
+   - **Test API Start:** Verifies API can start and serve requests
+   - **Test Pulumi:** Tests infrastructure code with Pulumi
+   - **Build:** Creates Lambda deployment packages for API and worker
+   - **Deploy Dev:** Deploys to dev environment (auto for PRs/pushes)
+   - **Deploy Demo:** Deploys to demo environment (only via manual trigger)
+
+3. **AWS Authentication:**
+   - Uses OIDC (OpenID Connect) for secure authentication to AWS
+   - Environment-specific AWS account IDs for multi-account deployments
+   - IAM role "github-actions" with controlled permissions
+
+4. **Environment Configuration:**
+   - Environment-specific secrets for AWS credentials and API keys
+   - GitHub Environments for "dev" and "demo" with appropriate protection rules
+   - Pulumi stacks named after environments for infrastructure management
+
+See the [CI/CD workflow file](.github/workflows/ci.yml) for detailed configuration.
 
 ## Roadmap
 
@@ -250,6 +295,7 @@ uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.
 - ✅ Architecture diagram
 - ✅ SQS queue and worker processing
 - ✅ CI/CD with GitHub Actions
+- ✅ Codecov integration
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration
@@ -263,3 +309,4 @@ uv run pytest --cov=gen_ai_on_aws && uv run coverage html && open htmlcov/index.
 ## License
 
 See the [LICENSE](LICENSE) file for details.
+
