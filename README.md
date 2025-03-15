@@ -289,6 +289,7 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ RAG with Aurora PostgreSQL
 - ⬜ PII data handling (log retention, masking, etc.)
+- ⬜ Cost tracking and alerts
 - ⬜ Custom domain name, SSL certificate, IP whitelisting, usage plans to restrict access to API
 - ⬜ Monitoring, alerts, tracing, backups, with optional integration with Incidents Manager / Pager Duty
 - ⬜ Lambda layers optimization for faster deployments
