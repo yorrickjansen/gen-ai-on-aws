@@ -263,27 +263,52 @@ This project uses GitHub Actions for continuous integration and deployment with 
    - Automatically runs on pull requests to main branch
    - Manual trigger via workflow dispatch with environment selection (dev/demo)
 
-2. **Jobs and Stages:**
-   - **Lint:** Code quality checks with ruff
+2. **CI Workflow:**
+   - **Lint:** Code quality checks with ruff, isort, and other tools
    - **Test API:** API unit tests with pytest and codecov integration
-   - **Test Worker:** Worker unit tests with pytest
+   - **Test Worker:** Worker unit tests with pytest and code coverage
    - **Test API Start:** Verifies API can start and serve requests
    - **Test Pulumi:** Tests infrastructure code with Pulumi
    - **Build:** Creates Lambda deployment packages for API and worker
-   - **Deploy Dev:** Deploys to dev environment (auto for PRs/pushes)
-   - **Deploy Demo:** Deploys to demo environment (only via manual trigger)
 
-3. **AWS Authentication:**
+3. **CD Workflow:**
+   - Runs automatically when code is pushed to `main` (dev environment) or `releases/demo` (demo environment)
+   - Uses AWS OIDC authentication for secure access to AWS resources
+   - Downloads Lambda packages built by the CI workflow
+   - Deploys the infrastructure using Pulumi
+
+4. **AWS Authentication:**
    - Uses OIDC (OpenID Connect) for secure authentication to AWS
    - Environment-specific AWS account IDs for multi-account deployments
    - IAM role "github-actions" with controlled permissions
 
-4. **Environment Configuration:**
+5. **Environment Configuration:**
    - Environment-specific secrets for AWS credentials and API keys
    - GitHub Environments for "dev" and "demo" with appropriate protection rules
    - Pulumi stacks named after environments for infrastructure management
 
-See the [CI/CD workflow file](.github/workflows/ci.yml) for detailed configuration.
+### CI/CD Setup Instructions
+
+1. **Configure AWS OIDC Integration:**
+   ```bash
+   # Set the GitHub repository in Pulumi config
+   cd provisioning
+   pulumi config set github_repo "your-org/your-repo"
+   pulumi up
+   ```
+
+2. **Configure GitHub Secrets:**
+   - `AWS_ROLE_TO_ASSUME`: The ARN of the role created by Pulumi
+   - `AWS_REGION`: The AWS region to deploy to (e.g., `us-east-1`)
+   - `PULUMI_PASSPHRASE`: A passphrase for encrypting the Pulumi state
+   - `CODECOV_TOKEN`: Token for uploading coverage reports (optional)
+
+3. **Branch Protection Rules:**
+   - Require status checks to pass before merging
+   - Require review before merging
+   - Do not allow bypassing the above settings
+
+See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 
 ## Roadmap
 
