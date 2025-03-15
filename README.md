@@ -295,6 +295,7 @@ See the [CI/CD workflow file](.github/workflows/ci.yml) for detailed configurati
 - ✅ Architecture diagram
 - ✅ SQS queue and worker processing
 - ✅ CI/CD with GitHub Actions
+- ✅ Codecov integration
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration
@@ -309,14 +310,3 @@ See the [CI/CD workflow file](.github/workflows/ci.yml) for detailed configurati
 
 See the [LICENSE](LICENSE) file for details.
 
-
-
-
-
-
-
-
-
-TODO
- - check manual trigger for demo
- - setup codecov
