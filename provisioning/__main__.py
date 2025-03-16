@@ -236,6 +236,57 @@ pulumi.export("sqs_queue_url", sqs_queue.url)
 if worker_code:
     pulumi.export("worker_lambda_function_name", worker_lambda.name)
 
+    # Create a user for n8n integration
+    n8n_user = aws.iam.User(
+        "n8nIntegrationUser",
+        name=f"{stack_name}_n8n_integration",
+        path="/service-accounts/",
+    )
+
+    # Create access keys for the n8n user
+    n8n_access_key = aws.iam.AccessKey(
+        "n8nIntegrationUserAccessKey", user=n8n_user.name
+    )
+
+    # Create a policy that allows invoking the worker lambda and listing functions
+    n8n_policy = aws.iam.Policy(
+        "n8nIntegrationPolicy",
+        name=f"{stack_name}_n8n_lambda_access",
+        description="Policy that allows n8n to invoke the worker lambda and list functions",
+        policy=worker_lambda.arn.apply(
+            lambda arn: json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "lambda:InvokeFunction",
+                            "Resource": arn,
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "lambda:ListFunctions",
+                                "lambda:GetFunction",
+                                "lambda:*",
+                            ],
+                            "Resource": "*",
+                        },
+                    ],
+                }
+            )
+        ),
+    )
+
+    # Attach the policy to the user
+    n8n_user_policy_attachment = aws.iam.UserPolicyAttachment(
+        "n8nUserPolicyAttachment", user=n8n_user.name, policy_arn=n8n_policy.arn
+    )
+
+    # Export the n8n user's access key for use in n8n configuration
+    pulumi.export("n8n_integration_user_access_key_id", n8n_access_key.id)
+    pulumi.export("n8n_integration_user_secret_access_key", n8n_access_key.secret)
+
 # Create GitHub Actions OIDC provider for CI/CD
 github_repo = config.get("github_repo")
 if github_repo:

@@ -55,11 +55,19 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     results = []
 
-    # Process each record (message) in the event
-    for record in event.get("Records", []):
-        message_body = record.get("body", "{}")
+    # Check if this is a direct invocation (e.g., from n8n) with request_id and payload
+    if "request_id" in event and "payload" in event:
+        # This is a direct invocation with the complete payload structure
+        logger.info("Processing direct invocation from n8n")
+        message_body = json.dumps(event)
         result = asyncio.run(process_message(message_body))
         results.append(result)
+    else:
+        # Process each record (message) in the event (SQS invocation)
+        for record in event.get("Records", []):
+            message_body = record.get("body", "{}")
+            result = asyncio.run(process_message(message_body))
+            results.append(result)
 
     result = {"statusCode": 200, "body": json.dumps({"results": results})}
 
