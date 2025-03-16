@@ -290,6 +290,7 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ⬜ RAG with Aurora PostgreSQL
 - ⬜ PII data handling (log retention, masking, etc.)
 - ⬜ Cost tracking and alerts
+- ⬜ Demo of Bedrock, Kendra, Lex, etc... integration
 - ⬜ Custom domain name, SSL certificate, IP whitelisting, usage plans to restrict access to API
 - ⬜ Monitoring, alerts, tracing, backups, with optional integration with Incidents Manager / Pager Duty
 - ⬜ Lambda layers optimization for faster deployments
