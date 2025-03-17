@@ -1,0 +1,10 @@
+config:
+  gen-ai-on-aws:anthropic_api_key_secret_name: anthropic-api-key
+  gen-ai-on-aws:app_version: latest
+  gen-ai-on-aws:langfuse_host: https://cloud.langfuse.com
+  gen-ai-on-aws:langfuse_public_key_secret_name: langfuse-public-key
+  gen-ai-on-aws:langfuse_secret_key_secret_name: langfuse-secret-key
+  gen-ai-on-aws:model_name: claude-3-haiku-20240307
+  gen-ai-on-aws:monitoring_email:
+    secure: AAABAIr457VHQbnYvGQukH7j+cCx9q5y5nk6pqv/7gH/pw17krw9XDm+2Ls92uTeGlpvKUrGess=
+  gen-ai-on-aws:stack_name: gen-ai-on-aws-demo
