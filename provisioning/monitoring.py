@@ -68,7 +68,7 @@ def create_monitoring_resources(
     # Lambda API errors alarm
     api_lambda_errors_alarm = aws.cloudwatch.MetricAlarm(
         "api-lambda-errors-alarm",
-        alarm_name=f"{stack_name}-api-lambda-errors",
+        name=f"{stack_name}-api-lambda-errors",
         comparison_operator="GreaterThanThreshold",
         evaluation_periods=1,
         metric_name="Errors",
@@ -89,7 +89,7 @@ def create_monitoring_resources(
     if worker_lambda:
         worker_lambda_errors_alarm = aws.cloudwatch.MetricAlarm(
             "worker-lambda-errors-alarm",
-            alarm_name=f"{stack_name}-worker-lambda-errors",
+            name=f"{stack_name}-worker-lambda-errors",
             comparison_operator="GreaterThanThreshold",
             evaluation_periods=1,
             metric_name="Errors",
@@ -109,7 +109,7 @@ def create_monitoring_resources(
         # Worker Lambda throttles alarm
         worker_lambda_throttles_alarm = aws.cloudwatch.MetricAlarm(
             "worker-lambda-throttles-alarm",
-            alarm_name=f"{stack_name}-worker-lambda-throttles",
+            name=f"{stack_name}-worker-lambda-throttles",
             comparison_operator="GreaterThanThreshold",
             evaluation_periods=1,
             metric_name="Throttles",
@@ -129,7 +129,7 @@ def create_monitoring_resources(
     # SQS DLQ message count alarm
     dlq_messages_alarm = aws.cloudwatch.MetricAlarm(
         "dlq-messages-alarm",
-        alarm_name=f"{stack_name}-dlq-messages",
+        name=f"{stack_name}-dlq-messages",
         comparison_operator="GreaterThanThreshold",
         evaluation_periods=1,
         metric_name="ApproximateNumberOfMessagesVisible",
@@ -149,7 +149,7 @@ def create_monitoring_resources(
     # API Gateway 5XX errors alarm
     api_gateway_5xx_alarm = aws.cloudwatch.MetricAlarm(
         "api-gateway-5xx-alarm",
-        alarm_name=f"{stack_name}-api-gateway-5xx",
+        name=f"{stack_name}-api-gateway-5xx",
         comparison_operator="GreaterThanThreshold",
         evaluation_periods=1,
         metric_name="5XXError",
@@ -170,7 +170,7 @@ def create_monitoring_resources(
     # API Gateway 4XX errors alarm (optional - but useful to track client errors)
     api_gateway_4xx_alarm = aws.cloudwatch.MetricAlarm(
         "api-gateway-4xx-alarm",
-        alarm_name=f"{stack_name}-api-gateway-4xx",
+        name=f"{stack_name}-api-gateway-4xx",
         comparison_operator="GreaterThanThreshold",
         evaluation_periods=1,
         metric_name="4XXError",
@@ -191,7 +191,7 @@ def create_monitoring_resources(
     # SQS queue message age alarm (detect stuck messages)
     sqs_message_age_alarm = aws.cloudwatch.MetricAlarm(
         "sqs-message-age-alarm",
-        alarm_name=f"{stack_name}-sqs-message-age",
+        name=f"{stack_name}-sqs-message-age",
         comparison_operator="GreaterThanThreshold",
         evaluation_periods=1,
         metric_name="ApproximateAgeOfOldestMessage",
