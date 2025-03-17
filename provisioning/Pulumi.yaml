@@ -9,6 +9,7 @@ config:
   github_repo: yorrickjansen/gen-ai-on-aws
   app_version: latest
   model_name: anthropic/claude-3-5-sonnet-20241022
+  gen-ai-on-aws:logging_level: INFO
   gen-ai-on-aws:anthropic_api_key_secret_name: anthropic_api_key
   gen-ai-on-aws:langfuse_public_key_secret_name: langfuse_public_key
   gen-ai-on-aws:langfuse_secret_key_secret_name: langfuse_secret_key

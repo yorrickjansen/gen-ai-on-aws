@@ -15,6 +15,9 @@ custom_stage_name = "stage"
 
 stack_name = pulumi.get_stack()
 
+# Get logging level from config
+logging_level = logs.get_logging_level()
+
 ##################
 ## CloudWatch Log Groups
 ##################
@@ -143,6 +146,7 @@ lambda_func = aws.lambda_.Function(
             "APP_VERSION": app_version,
             "MODEL": model_name,
             "STACK_NAME": stack_name,
+            "LOGGING_LEVEL": logging_level,
             "ANTHROPIC_API_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
             + config.require("anthropic_api_key_secret_name"),
             "LANGFUSE_PUBLIC_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
@@ -197,6 +201,7 @@ if worker_code:
                 else "latest",
                 "MODEL": model_name,
                 "STACK_NAME": stack_name,
+                "LOGGING_LEVEL": logging_level,
                 "ANTHROPIC_API_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"
                 + config.require("anthropic_api_key_secret_name"),
                 "LANGFUSE_PUBLIC_KEY_SECRET_NAME": f"gen-ai-on-aws/{stack_name}/"

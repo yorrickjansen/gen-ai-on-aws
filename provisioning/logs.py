@@ -1,3 +1,4 @@
+import pulumi
 import pulumi_aws as aws
 
 
@@ -56,3 +57,14 @@ def create_log_groups(stack_name, api_function_name, worker_function_name=None):
     resources["api_gateway_log_group"] = api_gateway_log_group
 
     return resources
+
+
+def get_logging_level():
+    """
+    Get logging level from Pulumi config or return default.
+
+    Returns:
+        str: Logging level (INFO, DEBUG, WARNING, ERROR, or CRITICAL)
+    """
+    config = pulumi.Config()
+    return config.get("logging_level", "INFO")

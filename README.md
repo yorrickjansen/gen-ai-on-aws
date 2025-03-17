@@ -302,6 +302,7 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ⬜ Demo of n8n integration
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ RAG with Aurora PostgreSQL
+- ⬜ VPC setup for Lambda functions and Aurora PostgreSQL
 - ⬜ PII data handling (log retention, masking, etc.)
 - ⬜ Cost tracking and alerts
 - ⬜ Demo of Bedrock, Kendra, Lex, etc... integration
