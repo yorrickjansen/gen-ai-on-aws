@@ -3,6 +3,7 @@ import json
 import os
 
 import iam
+import logs
 import monitoring
 import pulumi
 import pulumi_aws as aws
@@ -243,6 +244,17 @@ http_stage = aws.apigatewayv2.Stage(
             "throttling_rate_limit": 0.5,
         }
     ],
+    access_log_settings={
+        "destination_arn": pulumi.Output.concat(
+            "arn:aws:logs:",
+            region,
+            ":",
+            aws.get_caller_identity().account_id,
+            ":log-group:API-Gateway-Execution-Logs_",
+            stack_name,
+        ),
+        "format": '{"requestId":"$context.requestId", "ip":"$context.identity.sourceIp", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "routeKey":"$context.routeKey", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength", "path":"$context.path", "integrationStatus":"$context.integrationStatus", "integrationLatency":"$context.integrationLatency", "responseLatency":"$context.responseLatency"}',
+    },
     auto_deploy=True,
 )
 
@@ -279,6 +291,13 @@ monitoring_email = config.get("monitoring_email")
 # Get the worker lambda to pass to monitoring (could be None)
 worker_lambda_instance = worker_lambda if worker_code else None
 
+# Create explicitly defined CloudWatch log groups with 30-day retention
+log_groups = logs.create_log_groups(
+    stack_name=stack_name,
+    lambda_func=lambda_func,
+    worker_lambda=worker_lambda_instance,
+)
+
 # Create monitoring resources (CloudWatch alarms, dashboard, and optional SNS topic)
 monitoring_resources, dashboard_url = monitoring.create_monitoring_resources(
     stack_name=stack_name,
@@ -292,8 +311,9 @@ monitoring_resources, dashboard_url = monitoring.create_monitoring_resources(
     monitoring_email=monitoring_email,
 )
 
-# Export the dashboard URL
+# Export the dashboard URL and log retention information
 pulumi.export("dashboard_url", dashboard_url)
+pulumi.export("logs_retention_days", 30)
 
 # Create GitHub Actions OIDC provider for CI/CD
 github_repo = config.get("github_repo")

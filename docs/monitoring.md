@@ -13,6 +13,16 @@ The monitoring system is designed to detect and alert on issues across all compo
 
 ## Monitoring Components
 
+### CloudWatch Logs
+
+All logs are explicitly defined with a 30-day retention period:
+
+1. **API Lambda Logs**: `/aws/lambda/{lambda-name}`
+2. **Worker Lambda Logs**: `/aws/lambda/{worker-name}`
+3. **API Gateway Logs**: `API-Gateway-Execution-Logs_{stack-name}`
+
+These log groups are created with proper tags for identification and management.
+
 ### CloudWatch Alarms
 
 The following CloudWatch Alarms are configured:
