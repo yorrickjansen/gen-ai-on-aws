@@ -3,6 +3,7 @@ import json
 import os
 
 import iam
+import monitoring
 import pulumi
 import pulumi_aws as aws
 from github_actions import create_github_actions_oidc_provider
@@ -36,20 +37,51 @@ else:
 stack_name = pulumi.get_stack()
 
 ######################
-## SQS Queue
+## SQS Queue and DLQ
 ######################
 
-# Create a standard SQS queue for async processing
+# Create a Dead Letter Queue for failed messages
+dlq = aws.sqs.Queue(
+    "dead-letter-queue",
+    name=f"{stack_name}-dead-letter-queue",
+    message_retention_seconds=1209600,  # 14 days
+    receive_wait_time_seconds=20,  # Long polling
+    tags={
+        "Name": f"{stack_name}-dead-letter-queue",
+        "Environment": stack_name,
+    },
+)
+
+# Create a standard SQS queue for async processing with DLQ configuration
 sqs_queue = aws.sqs.Queue(
     "async-processing-queue",
     name=f"{stack_name}-async-processing-queue",
     visibility_timeout_seconds=300,  # 5 minutes, same as Lambda timeout
     message_retention_seconds=86400,  # 1 day
     receive_wait_time_seconds=20,  # Long polling
+    redrive_policy=dlq.arn.apply(
+        lambda arn: json.dumps(
+            {
+                "deadLetterTargetArn": arn,
+                "maxReceiveCount": 3,  # After 3 failed processing attempts, send to DLQ
+            }
+        )
+    ),
     tags={
         "Name": f"{stack_name}-async-processing-queue",
         "Environment": stack_name,
     },
+)
+
+# Create a redrive allow policy for the DLQ
+dlq_redrive_allow_policy = aws.sqs.RedriveAllowPolicy(
+    "dlq-redrive-allow-policy",
+    queue_url=dlq.id,
+    redrive_allow_policy=sqs_queue.arn.apply(
+        lambda arn: json.dumps(
+            {"redrivePermission": "byQueue", "sourceQueueArns": [arn]}
+        )
+    ),
 )
 
 # Create a policy document for the queue
@@ -233,8 +265,35 @@ pulumi.export(
 )
 pulumi.export("lambda_function_name", lambda_func.name)
 pulumi.export("sqs_queue_url", sqs_queue.url)
+pulumi.export("dlq_url", dlq.url)
 if worker_code:
     pulumi.export("worker_lambda_function_name", worker_lambda.name)
+
+##########################
+## Monitoring and Alarms
+##########################
+
+# Get the monitoring email from Pulumi config (if set)
+monitoring_email = config.get("monitoring_email")
+
+# Get the worker lambda to pass to monitoring (could be None)
+worker_lambda_instance = worker_lambda if worker_code else None
+
+# Create monitoring resources (CloudWatch alarms, dashboard, and optional SNS topic)
+monitoring_resources, dashboard_url = monitoring.create_monitoring_resources(
+    stack_name=stack_name,
+    region=region,
+    lambda_func=lambda_func,
+    worker_lambda=worker_lambda_instance,
+    sqs_queue=sqs_queue,
+    dlq=dlq,
+    http_endpoint=http_endpoint,
+    http_stage=http_stage,
+    monitoring_email=monitoring_email,
+)
+
+# Export the dashboard URL
+pulumi.export("dashboard_url", dashboard_url)
 
 # Create GitHub Actions OIDC provider for CI/CD
 github_repo = config.get("github_repo")
