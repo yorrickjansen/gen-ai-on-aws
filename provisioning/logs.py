@@ -18,10 +18,10 @@ def create_log_groups(stack_name, lambda_func, worker_lambda=None):
     # Define log retention period in days
     retention_days = 30
 
-    # Create API Lambda log group
+    # Create API Lambda log group using .apply() to handle the Output
     api_lambda_log_group = aws.cloudwatch.LogGroup(
         "api-lambda-log-group",
-        name=f"/aws/lambda/{lambda_func.name}",
+        name=lambda_func.name.apply(lambda name: f"/aws/lambda/{name}"),
         retention_in_days=retention_days,
         tags={
             "Name": f"{stack_name}-api-lambda-logs",
@@ -34,7 +34,7 @@ def create_log_groups(stack_name, lambda_func, worker_lambda=None):
     if worker_lambda:
         worker_lambda_log_group = aws.cloudwatch.LogGroup(
             "worker-lambda-log-group",
-            name=f"/aws/lambda/{worker_lambda.name}",
+            name=worker_lambda.name.apply(lambda name: f"/aws/lambda/{name}"),
             retention_in_days=retention_days,
             tags={
                 "Name": f"{stack_name}-worker-lambda-logs",
