@@ -68,6 +68,8 @@ graph TB
 - `provisioning/` - Pulumi IaC for AWS resources
 - `specs/` - AI Coding prompt
 - `ai-docs/` - Reference documentation for AI coding, scraped with Firecrawl MCP (Model Context Protocol)
+- `docs/` - Project documentation
+  - `monitoring.md` - Monitoring and alerting setup documentation
 - `.github/workflows/` - CI/CD pipeline configurations
 
 Each directory has its own dependency set (pyproject.toml). Root dependencies enforce consistent standards across the repository.
@@ -156,6 +158,17 @@ aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
 ```
 
 ## Advanced Configuration
+
+### Monitoring Email Notifications
+
+To enable email notifications for CloudWatch alarms, add the `monitoring_email` parameter to your Pulumi config:
+
+```bash
+cd provisioning
+pulumi config set monitoring_email your.email@example.com
+```
+
+This will create an SNS topic and subscription that sends notifications for all alarms when they enter ALARM or OK states.
 
 ### LangFuse Integration
 
@@ -284,15 +297,17 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ✅ SQS queue and worker processing
 - ✅ CI/CD with GitHub Actions
 - ✅ Codecov integration
+- ✅ Monitoring, alerting ([docs](docs/monitoring.md))
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ RAG with Aurora PostgreSQL
+- ⬜ VPC setup for Lambda functions and Aurora PostgreSQL
 - ⬜ PII data handling (log retention, masking, etc.)
 - ⬜ Cost tracking and alerts
 - ⬜ Demo of Bedrock, Kendra, Lex, etc... integration
 - ⬜ Custom domain name, SSL certificate, IP whitelisting, usage plans to restrict access to API
-- ⬜ Monitoring, alerts, tracing, backups, with optional integration with Incidents Manager / Pager Duty
+- ⬜ tracing, backups, with optional integration with Incidents Manager / Pager Duty
 - ⬜ Lambda layers optimization for faster deployments
 - ⬜ Progressive deployments for improved reliability in production (using CodeDeploy, triggered from GH Actions)
 - ⬜ Frontend implementation for demo (optional websocket push)

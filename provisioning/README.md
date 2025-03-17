@@ -28,9 +28,16 @@ This sample uses the following AWS products:
 
 ## Deploy the App
 
-1.  Run `pulumi up` to preview and deploy changes:
+1.  Configure the application settings:
 
-2.  To view the runtime logs of the Lambda function, use the `pulumi logs` command. To get a log stream, use `pulumi logs --follow`.
+    ```bash
+    # Set the logging level (INFO, DEBUG, WARNING, ERROR, CRITICAL)
+    $ pulumi config set logging_level INFO
+    ```
+
+2.  Run `pulumi up` to preview and deploy changes:
+
+3.  To view the runtime logs of the Lambda function, use the `pulumi logs` command. To get a log stream, use `pulumi logs --follow`.
 
 ## Test the Endpoints
 

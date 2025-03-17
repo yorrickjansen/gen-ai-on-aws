@@ -1,14 +1,20 @@
 import logging
+import os
 
 from fastapi import FastAPI
 from gen_ai_on_aws.config import settings
 from gen_ai_on_aws.routers import router
 from mangum import Mangum
 
+# Get logging level from environment variable or default to INFO
+log_level_name = os.environ.get("LOGGING_LEVEL", "INFO")
+log_level = getattr(logging, log_level_name.upper(), logging.INFO)
+
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-# TODO somehow this doesn't work
-# logging.getLogger("litellm").setLevel(logging.WARNING)
+logger.setLevel(log_level)
+
+# Set specific level for litellm to reduce noise
+logging.getLogger("litellm").setLevel(logging.WARNING)
 
 
 app = FastAPI(

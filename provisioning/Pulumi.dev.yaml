@@ -1,0 +1,4 @@
+config:
+  gen-ai-on-aws:logging_level: INFO
+  gen-ai-on-aws:monitoring_email:
+    secure: AAABAGwyFnJPW/g0bqSdS53/sbIVm+r14SkdoliFOg3CTcF9/Cy5otFYXTGIPIQvI6jW2tgbgS4=

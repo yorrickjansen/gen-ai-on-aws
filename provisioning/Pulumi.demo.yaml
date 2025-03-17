@@ -1,0 +1,4 @@
+config:
+  gen-ai-on-aws:monitoring_email:
+    secure: AAABAIr457VHQbnYvGQukH7j+cCx9q5y5nk6pqv/7gH/pw17krw9XDm+2Ls92uTeGlpvKUrGess=
+  gen-ai-on-aws:stack_name: gen-ai-on-aws-demo
