@@ -7,6 +7,7 @@ import litellm
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Setup module logger based on environment configuration
 logger = logging.getLogger(__name__)
 
 
@@ -27,6 +28,7 @@ class Settings(BaseSettings):
 
     model: str = "anthropic/claude-3-5-sonnet-20241022"
     stack_name: str = "dev"  # Default to dev for testing
+    logging_level: str = "INFO"
     anthropic_api_key_secret_name: str | None = None
     langfuse_public_key_secret_name: str | None = None
     langfuse_secret_key_secret_name: str | None = None
