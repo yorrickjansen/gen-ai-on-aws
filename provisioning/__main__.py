@@ -13,6 +13,23 @@ region = os.environ.get("AWS_DEFAULT_REGION")
 config = pulumi.Config()
 custom_stage_name = "stage"
 
+stack_name = pulumi.get_stack()
+
+##################
+## CloudWatch Log Groups
+##################
+
+# Create log groups first (they must exist before the Lambda functions)
+api_function_name = f"{stack_name}_gen-ai-on-aws"
+worker_function_name = f"{stack_name}_gen-ai-on-aws-worker"
+
+# Create the log groups
+log_groups = logs.create_log_groups(
+    stack_name=stack_name,
+    api_function_name=api_function_name,
+    worker_function_name=worker_function_name,
+)
+
 ##################
 ## Lambda Function
 ##################
@@ -23,7 +40,6 @@ custom_stage_name = "stage"
 app_version = config.require("app_version")
 model_name = config.require("model_name")
 
-
 if app_version == "latest":
     # find the latest file named `api-package-*.zip` in the `api/build/packages` folder, using file timestamp
     list_of_files = glob.glob("../api/build/packages/api-package-*.zip")
@@ -33,9 +49,6 @@ if app_version == "latest":
 else:
     print(f"Using app version: {app_version}")
     code = pulumi.FileArchive(f"../api/build/packages/api-package-{app_version}.zip")
-
-
-stack_name = pulumi.get_stack()
 
 ######################
 ## SQS Queue and DLQ
@@ -117,7 +130,7 @@ queue_policy = aws.sqs.QueuePolicy(
 
 lambda_func = aws.lambda_.Function(
     "app",
-    name=f"{stack_name}_gen-ai-on-aws",
+    name=api_function_name,  # Use the same name we used for log group
     role=iam.lambda_role.arn,
     runtime="python3.13",
     handler="gen_ai_on_aws.main.handler",
@@ -140,6 +153,8 @@ lambda_func = aws.lambda_.Function(
             "SQS_QUEUE_URL": sqs_queue.url,
         },
     },
+    # Add explicit dependency on log group
+    opts=pulumi.ResourceOptions(depends_on=[log_groups["api_lambda_log_group"]]),
 )
 
 ##################
@@ -168,7 +183,7 @@ if worker_code:
     # Create the worker Lambda function
     worker_lambda = aws.lambda_.Function(
         "worker",
-        name=f"{stack_name}_gen-ai-on-aws-worker",
+        name=worker_function_name,  # Use the same name we used for log group
         role=iam.worker_lambda_role.arn,
         runtime="python3.13",
         handler="worker.main.lambda_handler",
@@ -191,6 +206,8 @@ if worker_code:
                 "LANGFUSE_HOST": config.require("langfuse_host"),
             },
         },
+        # Add explicit dependency on log group
+        opts=pulumi.ResourceOptions(depends_on=[log_groups["worker_lambda_log_group"]]),
     )
 
     # Create event source mapping from SQS to Lambda
@@ -245,17 +262,12 @@ http_stage = aws.apigatewayv2.Stage(
         }
     ],
     access_log_settings={
-        "destination_arn": pulumi.Output.concat(
-            "arn:aws:logs:",
-            region,
-            ":",
-            aws.get_caller_identity().account_id,
-            ":log-group:API-Gateway-Execution-Logs_",
-            stack_name,
-        ),
+        "destination_arn": log_groups["api_gateway_log_group"].arn,
         "format": '{"requestId":"$context.requestId", "ip":"$context.identity.sourceIp", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "routeKey":"$context.routeKey", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength", "path":"$context.path", "integrationStatus":"$context.integrationStatus", "integrationLatency":"$context.integrationLatency", "responseLatency":"$context.responseLatency"}',
     },
     auto_deploy=True,
+    # Add explicit dependency on the API Gateway log group
+    opts=pulumi.ResourceOptions(depends_on=[log_groups["api_gateway_log_group"]]),
 )
 
 # Give permissions from API Gateway to invoke the Lambda
@@ -290,13 +302,6 @@ monitoring_email = config.get("monitoring_email")
 
 # Get the worker lambda to pass to monitoring (could be None)
 worker_lambda_instance = worker_lambda if worker_code else None
-
-# Create explicitly defined CloudWatch log groups with 30-day retention
-log_groups = logs.create_log_groups(
-    stack_name=stack_name,
-    lambda_func=lambda_func,
-    worker_lambda=worker_lambda_instance,
-)
 
 # Create monitoring resources (CloudWatch alarms, dashboard, and optional SNS topic)
 monitoring_resources, dashboard_url = monitoring.create_monitoring_resources(

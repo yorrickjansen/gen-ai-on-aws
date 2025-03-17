@@ -21,7 +21,11 @@ All logs are explicitly defined with a 30-day retention period:
 2. **Worker Lambda Logs**: `/aws/lambda/{worker-name}`
 3. **API Gateway Logs**: `API-Gateway-Execution-Logs_{stack-name}`
 
-These log groups are created with proper tags for identification and management.
+These log groups are:
+- Created with proper tags for identification and management
+- Created BEFORE their corresponding resources to ensure proper dependency order
+- Configured with explicit dependencies to make sure log groups exist before their resources
+- Set up to retain logs for 30 days, balancing debugging needs with cost optimization
 
 ### CloudWatch Alarms
 

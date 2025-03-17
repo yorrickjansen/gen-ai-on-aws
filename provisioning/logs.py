@@ -1,14 +1,15 @@
+import pulumi
 import pulumi_aws as aws
 
 
-def create_log_groups(stack_name, lambda_func, worker_lambda=None):
+def create_log_groups(stack_name, api_function_name, worker_function_name=None):
     """
     Creates explicitly defined CloudWatch Log Groups with retention policies.
 
     Args:
         stack_name: The name of the Pulumi stack
-        lambda_func: API Lambda function resource
-        worker_lambda: Worker Lambda function resource (optional)
+        api_function_name: API Lambda function name (string, not an Output)
+        worker_function_name: Worker Lambda function name (string, not an Output) (optional)
 
     Returns:
         Dictionary of created log group resources
@@ -18,10 +19,10 @@ def create_log_groups(stack_name, lambda_func, worker_lambda=None):
     # Define log retention period in days
     retention_days = 30
 
-    # Create API Lambda log group using .apply() to handle the Output
+    # Create API Lambda log group - using a string directly now
     api_lambda_log_group = aws.cloudwatch.LogGroup(
         "api-lambda-log-group",
-        name=lambda_func.name.apply(lambda name: f"/aws/lambda/{name}"),
+        name=f"/aws/lambda/{api_function_name}",
         retention_in_days=retention_days,
         tags={
             "Name": f"{stack_name}-api-lambda-logs",
@@ -30,11 +31,11 @@ def create_log_groups(stack_name, lambda_func, worker_lambda=None):
     )
     resources["api_lambda_log_group"] = api_lambda_log_group
 
-    # Create Worker Lambda log group if worker lambda exists
-    if worker_lambda:
+    # Create Worker Lambda log group if worker lambda name is provided
+    if worker_function_name:
         worker_lambda_log_group = aws.cloudwatch.LogGroup(
             "worker-lambda-log-group",
-            name=worker_lambda.name.apply(lambda name: f"/aws/lambda/{name}"),
+            name=f"/aws/lambda/{worker_function_name}",
             retention_in_days=retention_days,
             tags={
                 "Name": f"{stack_name}-worker-lambda-logs",
