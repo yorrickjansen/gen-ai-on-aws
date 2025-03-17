@@ -159,6 +159,17 @@ aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
 
 ## Advanced Configuration
 
+### Monitoring Email Notifications
+
+To enable email notifications for CloudWatch alarms, add the `monitoring_email` parameter to your Pulumi config:
+
+```bash
+cd provisioning
+pulumi config set monitoring_email your.email@example.com
+```
+
+This will create an SNS topic and subscription that sends notifications for all alarms when they enter ALARM or OK states.
+
 ### LangFuse Integration
 
 ```bash
