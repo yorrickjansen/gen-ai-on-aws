@@ -128,5 +128,8 @@ def test_render_template_with_complex_values():
 def test_render_template_file_not_found():
     """Test rendering a template that doesn't exist."""
     # Try to render a nonexistent template
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError) as excinfo:
         render_template("/nonexistent/path.json", {})
+
+    # Check the error message
+    assert "Template file not found" in str(excinfo.value)

@@ -25,14 +25,13 @@ def test_import_workflow_new(runner, mock_template_file):
             result = runner.invoke(
                 app,
                 [
-                    "import-workflow",
-                    "--workflow-template-path",
+                    "-p",
                     mock_template_file,
-                    "--server-url",
+                    "-u",
                     "http://localhost:5678",
-                    "--n8n-api-key",
+                    "-k",
                     "api-key",
-                    "--template-values",
+                    "-t",
                     '{"service_credentials_id": "1234567890"}',
                 ],
             )
@@ -59,14 +58,13 @@ def test_import_workflow_update(runner, mock_template_file):
             result = runner.invoke(
                 app,
                 [
-                    "import-workflow",
-                    "--workflow-template-path",
+                    "-p",
                     mock_template_file,
-                    "--server-url",
+                    "-u",
                     "http://localhost:5678",
-                    "--n8n-api-key",
+                    "-k",
                     "api-key",
-                    "--template-values",
+                    "-t",
                     '{"service_credentials_id": "1234567890"}',
                 ],
             )
@@ -87,14 +85,13 @@ def test_import_workflow_invalid_template_values(runner, mock_template_file):
     result = runner.invoke(
         app,
         [
-            "import-workflow",
-            "--workflow-template-path",
+            "-p",
             mock_template_file,
-            "--server-url",
+            "-u",
             "http://localhost:5678",
-            "--n8n-api-key",
+            "-k",
             "api-key",
-            "--template-values",
+            "-t",
             "invalid json",
         ],
     )
@@ -110,14 +107,13 @@ def test_import_workflow_nonexistent_template(runner):
     result = runner.invoke(
         app,
         [
-            "import-workflow",
-            "--workflow-template-path",
+            "-p",
             "/nonexistent/path.json",
-            "--server-url",
+            "-u",
             "http://localhost:5678",
-            "--n8n-api-key",
+            "-k",
             "api-key",
-            "--template-values",
+            "-t",
             "{}",
         ],
     )
@@ -132,14 +128,13 @@ def test_import_workflow_template_rendering_error(runner, mock_invalid_json_temp
     result = runner.invoke(
         app,
         [
-            "import-workflow",
-            "--workflow-template-path",
+            "-p",
             mock_invalid_json_template,
-            "--server-url",
+            "-u",
             "http://localhost:5678",
-            "--n8n-api-key",
+            "-k",
             "api-key",
-            "--template-values",
+            "-t",
             "{}",
         ],
     )
@@ -154,14 +149,13 @@ def test_import_workflow_missing_name(runner, mock_template_with_missing_name):
     result = runner.invoke(
         app,
         [
-            "import-workflow",
-            "--workflow-template-path",
+            "-p",
             mock_template_with_missing_name,
-            "--server-url",
+            "-u",
             "http://localhost:5678",
-            "--n8n-api-key",
+            "-k",
             "api-key",
-            "--template-values",
+            "-t",
             "{}",
         ],
     )
@@ -182,14 +176,13 @@ def test_import_workflow_api_error_create(runner, mock_template_file):
             result = runner.invoke(
                 app,
                 [
-                    "import-workflow",
-                    "--workflow-template-path",
+                    "-p",
                     mock_template_file,
-                    "--server-url",
+                    "-u",
                     "http://localhost:5678",
-                    "--n8n-api-key",
+                    "-k",
                     "api-key",
-                    "--template-values",
+                    "-t",
                     '{"service_credentials_id": "1234567890"}',
                 ],
             )
@@ -216,14 +209,13 @@ def test_import_workflow_api_error_update(runner, mock_template_file):
             result = runner.invoke(
                 app,
                 [
-                    "import-workflow",
-                    "--workflow-template-path",
+                    "-p",
                     mock_template_file,
-                    "--server-url",
+                    "-u",
                     "http://localhost:5678",
-                    "--n8n-api-key",
+                    "-k",
                     "api-key",
-                    "--template-values",
+                    "-t",
                     '{"service_credentials_id": "1234567890"}',
                 ],
             )

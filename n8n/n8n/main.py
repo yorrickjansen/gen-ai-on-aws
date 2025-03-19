@@ -17,6 +17,10 @@ def render_template(template_path: str, template_values: Dict[str, str]) -> str:
     template_dir = os.path.dirname(template_path)
     template_file = os.path.basename(template_path)
 
+    # Verify the file exists before trying to render it
+    if not os.path.isfile(template_path):
+        raise FileNotFoundError(f"Template file not found: {template_path}")
+
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = env.get_template(template_file)
 
@@ -84,17 +88,18 @@ def import_workflow(
     workflow_template_path: Annotated[
         str,
         typer.Option(
-            "--workflow-template-path", help="Path to the workflow template file"
+            "--workflow-template-path", "-p", help="Path to the workflow template file"
         ),
     ],
     server_url: Annotated[
-        str, typer.Option("--server-url", help="URL of the n8n server")
+        str, typer.Option("--server-url", "-u", help="URL of the n8n server")
     ],
     n8n_api_key: Annotated[
-        str, typer.Option("--n8n-api-key", help="API key for the n8n server")
+        str, typer.Option("--n8n-api-key", "-k", help="API key for the n8n server")
     ],
     template_values: Annotated[
-        str, typer.Option("--template-values", help="JSON string of template values")
+        str,
+        typer.Option("--template-values", "-t", help="JSON string of template values"),
     ] = "{}",
 ):
     """Import a workflow template into n8n.
