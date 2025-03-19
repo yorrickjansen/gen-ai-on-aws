@@ -1,4 +1,4 @@
-"""CLI tool to help with the management of n8n workflows."""
+"""Command-line utility for managing n8n workflows and deployments."""
 
 import json
 import os
@@ -9,7 +9,9 @@ import jinja2
 import requests
 import typer
 
-app = typer.Typer(help="CLI tool to help with the management of n8n workflows.")
+app = typer.Typer(
+    help="Command-line utility for managing n8n workflows and deployments."
+)
 
 
 def render_template(template_path: str, template_values: Dict[str, str]) -> str:
