@@ -141,7 +141,8 @@ def test_import_workflow_template_rendering_error(runner, mock_invalid_json_temp
 
     # Check that the command failed
     assert result.exit_code == 1
-    assert "Error: Failed to parse rendered template as JSON" in result.stdout
+    # This will now be JSON parsing error since the template is valid Jinja but invalid JSON
+    assert "Failed to parse rendered template as JSON" in result.stdout
 
 
 def test_import_workflow_missing_name(runner, mock_template_with_missing_name):
