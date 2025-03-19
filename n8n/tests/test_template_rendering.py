@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 
+import jinja2
 import pytest
 
 from n8n.main import render_template
@@ -26,43 +27,39 @@ def test_render_template(mock_template_file):
     assert workflow_data["credentials"]["service"]["name"] == "Service account"
 
 
-def test_render_template_with_empty_values():
-    """Test rendering a template with empty values."""
+def test_render_template_with_missing_variables_fails():
+    """Test that rendering fails when template variables are missing."""
     # Create a simple template file
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as tmp:
         tmp.write('{"name": "test-{{ value }}"}')
         template_path = tmp.name
 
     try:
-        # Render the template with empty values
-        rendered = render_template(template_path, {})
+        # Render the template with empty values - should raise an exception
+        with pytest.raises(jinja2.exceptions.UndefinedError) as excinfo:
+            render_template(template_path, {})
 
-        # Parse the rendered template as JSON
-        workflow_data = json.loads(rendered)
-
-        # Check that the template was rendered correctly (with empty value)
-        assert workflow_data["name"] == "test-"
+        # Check the error message indicates the missing variable
+        assert "'value' is undefined" in str(excinfo.value)
     finally:
         # Clean up the temporary file
         os.unlink(template_path)
 
 
-def test_render_template_with_missing_variable():
-    """Test rendering a template with a missing variable."""
+def test_render_template_with_incorrect_variable_name_fails():
+    """Test that rendering fails when using incorrect variable names."""
     # Create a template file with a variable
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as tmp:
         tmp.write('{"name": "test-{{ value }}"}')
         template_path = tmp.name
 
     try:
-        # Render the template with no matching variable
-        rendered = render_template(template_path, {"other_value": "test"})
+        # Render the template with a different variable name - should raise an exception
+        with pytest.raises(jinja2.exceptions.UndefinedError) as excinfo:
+            render_template(template_path, {"other_value": "test"})
 
-        # Parse the rendered template as JSON
-        workflow_data = json.loads(rendered)
-
-        # Check that the template was rendered with an empty value
-        assert workflow_data["name"] == "test-"
+        # Check the error message indicates the missing variable
+        assert "'value' is undefined" in str(excinfo.value)
     finally:
         # Clean up the temporary file
         os.unlink(template_path)

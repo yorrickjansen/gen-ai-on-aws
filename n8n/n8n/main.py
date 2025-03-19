@@ -15,7 +15,12 @@ app = typer.Typer(
 
 
 def render_template(template_path: str, template_values: Dict[str, str]) -> str:
-    """Render a Jinja2 template with the given values."""
+    """Render a Jinja2 template with the given values.
+
+    Raises:
+        FileNotFoundError: If the template file does not exist
+        jinja2.exceptions.UndefinedError: If any template variables are missing values
+    """
     template_dir = os.path.dirname(template_path)
     template_file = os.path.basename(template_path)
 
@@ -23,7 +28,10 @@ def render_template(template_path: str, template_values: Dict[str, str]) -> str:
     if not os.path.isfile(template_path):
         raise FileNotFoundError(f"Template file not found: {template_path}")
 
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    # Set strict_undefined to make the template rendering fail when variables are missing
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(template_dir), undefined=jinja2.StrictUndefined
+    )
     template = env.get_template(template_file)
 
     return template.render(**template_values)

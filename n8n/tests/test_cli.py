@@ -227,3 +227,26 @@ def test_import_workflow_api_error_update(runner, mock_template_file):
             # Verify the right functions were called
             mock_get.assert_called_once()
             mock_update.assert_called_once()
+
+
+def test_import_workflow_missing_template_variables(runner, mock_template_file):
+    """Test importing a workflow with missing template variables."""
+    # Run the command with empty template values - should fail since variables are required
+    result = runner.invoke(
+        app,
+        [
+            "-p",
+            mock_template_file,
+            "-u",
+            "http://localhost:5678",
+            "-k",
+            "api-key",
+            "-t",
+            "{}",  # Empty JSON object, missing required variables
+        ],
+    )
+
+    # Check that the command failed
+    assert result.exit_code == 1
+    assert "Error rendering template" in result.stdout
+    assert "'service_credentials_id' is undefined" in result.stdout
