@@ -8,5 +8,14 @@ worker/build/
 
 .aider*
 
+# Claude Code local settings
+.claude/settings.local.json
+
 .coverage
 htmlcov
+
+# Pulumi stack files - ignore personal stacks, keep shared environments
+provisioning/Pulumi.*.yaml
+!provisioning/Pulumi.dev.yaml
+!provisioning/Pulumi.demo.yaml
+!provisioning/Pulumi.prod.yaml

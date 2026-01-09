@@ -124,6 +124,26 @@ uv run pulumi stack init $PULUMI_STACK
 
 ### 3. Configure AWS Credentials
 
+```
+aws sso login --profile <profile>
+```
+
+With `~/.aws/config`
+
+```
+[profile <org-name>-prod]
+sso_session = <org-name>
+sso_account_id = <account-id>
+sso_role_name = AWSAdministratorAccess
+region = eu-central-1
+login_session = arn:aws:sts::<account-id>:assumed-role/AWSReservedSSO_AWSAdministratorAccess_123456/<user-name>
+
+[sso-session <org-name>]
+sso_start_url = https://<org-name>.awsapps.com/start/
+sso_region = eu-central-1
+sso_registration_scopes = sso:account:access
+```
+
 ```bash
 export AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY"
 export AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"

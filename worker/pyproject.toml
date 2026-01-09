@@ -2,7 +2,7 @@
 name = "gen_ai_on_aws_worker"
 version = "0.1.0"
 description = "Worker code for GenAI on AWS"
-requires-python = ">=3.13"
+requires-python = "==3.13.*"
 dependencies = [
     "anthropic>=0.49.0",
     "boto3>=1.37.5",
