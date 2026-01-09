@@ -408,6 +408,48 @@ This project uses GitHub Actions for continuous integration and deployment with 
 
 See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 
+## Security & Code Quality
+
+### Pre-commit Hooks
+
+The project uses pre-commit hooks to maintain code quality and security:
+
+- **Ruff** - Fast Python linter and formatter
+- **isort** - Import sorting (Black-compatible)
+- **pyupgrade** - Automatic Python syntax upgrades
+- **Claude Code Secrets Scanner** - AI-powered detection of sensitive data ⚡
+
+### Secrets Scanner
+
+An AI-powered pre-commit hook scans for sensitive data before each commit:
+
+**Detects:**
+- API keys and tokens (AWS, OpenAI, Anthropic, GitHub, Stripe, etc.)
+- Database credentials and connection strings
+- Private keys and certificates (PEM blocks, SSH keys)
+- Passwords and cryptographic secrets
+- Personally Identifiable Information (PII)
+
+**Features:**
+- Smart detection that distinguishes real secrets from placeholders
+- Blocks commits with high-risk findings (private keys, real credentials)
+- Allows low-risk findings with warnings
+- Gracefully skips if Claude Code CLI is not installed
+
+**Requirements:**
+- [Claude Code CLI](https://claude.com/claude-code) installed locally
+- Not required for CI/CD (hook auto-skips if not available)
+
+**Bypass (not recommended):**
+```bash
+git commit --no-verify
+```
+
+**Install Claude Code:**
+```bash
+# See https://claude.com/claude-code for installation
+```
+
 ## Roadmap
 
 - ✅ FastAPI application with routers

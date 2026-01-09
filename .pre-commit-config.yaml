@@ -24,6 +24,15 @@ repos:
     rev: v3.19.1
     hooks:
     -   id: pyupgrade
+-   repo: local
+    hooks:
+    -   id: check-secrets
+        name: Claude Code - Check for secrets
+        entry: .github/hooks/check-secrets.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 # -   repo: https://github.com/pre-commit/mirrors-mypy
 #     rev: v1.14.1
 #     hooks:
