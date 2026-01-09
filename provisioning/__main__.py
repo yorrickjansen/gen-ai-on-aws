@@ -3,6 +3,7 @@ import json
 import os
 
 import iam
+import layers
 import logs
 import monitoring
 import pulumi
@@ -128,6 +129,17 @@ queue_policy = aws.sqs.QueuePolicy(
 )
 
 ##################
+## Lambda Layers
+##################
+
+# Get or create API Lambda layer (hash-based, cached in AWS)
+api_layer_arn = layers.get_layer_for_lambda(
+    name="api", lock_file_path="../api/uv.lock", build_dir="build/layers"
+)
+
+pulumi.export("api_layer_arn", api_layer_arn)
+
+##################
 ## API Lambda
 ##################
 
@@ -140,6 +152,7 @@ lambda_func = aws.lambda_.Function(
     timeout=30,
     memory_size=256,
     code=code,
+    layers=[api_layer_arn],  # Add the dependencies layer
     # source_code_hash=TODO,
     environment={
         "variables": {
@@ -184,6 +197,13 @@ else:
     )
 
 if worker_code:
+    # Get or create Worker Lambda layer (hash-based, cached in AWS)
+    worker_layer_arn = layers.get_layer_for_lambda(
+        name="worker", lock_file_path="../worker/uv.lock", build_dir="build/layers"
+    )
+
+    pulumi.export("worker_layer_arn", worker_layer_arn)
+
     # Create the worker Lambda function
     worker_lambda = aws.lambda_.Function(
         "worker",
@@ -194,6 +214,7 @@ if worker_code:
         timeout=300,  # 5 minutes
         memory_size=512,
         code=worker_code,
+        layers=[worker_layer_arn],  # Add the dependencies layer
         environment={
             "variables": {
                 "WORKER_VERSION": worker_version

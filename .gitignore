@@ -2,6 +2,7 @@
 provisioning/venv/
 app/venv/
 
+# Build artifacts (packages and layers)
 api/build/
 worker/build/
 

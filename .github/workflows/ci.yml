@@ -225,13 +225,25 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: api-package
-        path: api/build/packages/api-package-*.zip
+        path: api/build/packages/api-*.zip
+        retention-days: 7
+    - name: Upload API layer artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-layer
+        path: api/build/layers/*-api-libs.zip
         retention-days: 7
     - name: Upload worker package artifact
       uses: actions/upload-artifact@v4
       with:
         name: worker-package
-        path: worker/build/packages/worker-package-*.zip
+        path: worker/build/packages/worker-*.zip
+        retention-days: 7
+    - name: Upload worker layer artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: worker-layer
+        path: worker/build/layers/*-worker-libs.zip
         retention-days: 7
         
   deploy-dev:
@@ -243,7 +255,7 @@ jobs:
     permissions:
       id-token: write  # Required for OIDC auth with AWS
       contents: read   # Required to checkout the code
-    
+
     steps:
       # Debug context
       - name: Debug GitHub context
@@ -259,28 +271,40 @@ jobs:
           echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
           echo "Is PR: ${{ github.event_name == 'pull_request' }}"
           echo "Is push: ${{ github.event_name == 'push' }}"
-      
+
       - uses: actions/checkout@v4
-      
+
       # Configure AWS credentials using OIDC
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
           aws-region: ${{ secrets.AWS_REGION || env.AWS_DEFAULT_REGION }}
-      
+
       # Download artifacts from build job
       - name: Download API package
         uses: actions/download-artifact@v4
         with:
           name: api-package
           path: api/build/packages/
-      
+
+      - name: Download API layer
+        uses: actions/download-artifact@v4
+        with:
+          name: api-layer
+          path: api/build/layers/
+
       - name: Download worker package
         uses: actions/download-artifact@v4
         with:
           name: worker-package
           path: worker/build/packages/
+
+      - name: Download worker layer
+        uses: actions/download-artifact@v4
+        with:
+          name: worker-layer
+          path: worker/build/layers/
       
       # Set up Python
       - name: Set up Python
@@ -327,7 +351,7 @@ jobs:
           ENDPOINT=$(pulumi stack output apigatewayv2-http-endpoint)
           curl -f "${ENDPOINT}examples/hello" || exit 1
           
-  # Production deployment job - only runs on manual workflow dispatch         
+  # Production deployment job - only runs on manual workflow dispatch
   deploy-demo:
     needs: build
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'demo'
@@ -336,35 +360,47 @@ jobs:
     permissions:
       id-token: write  # Required for OIDC auth with AWS
       contents: read   # Required to checkout the code
-    
+
     steps:
       - name: Debug GitHub context
         run: |
           echo "Event name: ${{ github.event_name }}"
           echo "Repository: ${{ github.repository }}"
           echo "Selected environment: ${{ github.event.inputs.environment }}"
-      
+
       - uses: actions/checkout@v4
-      
+
       # Configure AWS credentials using OIDC
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
           aws-region: ${{ secrets.AWS_REGION || env.AWS_DEFAULT_REGION }}
-      
+
       # Download artifacts from build job
       - name: Download API package
         uses: actions/download-artifact@v4
         with:
           name: api-package
           path: api/build/packages/
-      
+
+      - name: Download API layer
+        uses: actions/download-artifact@v4
+        with:
+          name: api-layer
+          path: api/build/layers/
+
       - name: Download worker package
         uses: actions/download-artifact@v4
         with:
           name: worker-package
           path: worker/build/packages/
+
+      - name: Download worker layer
+        uses: actions/download-artifact@v4
+        with:
+          name: worker-layer
+          path: worker/build/layers/
       
       # Set up Python
       - name: Set up Python

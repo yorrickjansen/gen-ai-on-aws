@@ -92,7 +92,7 @@ TLDR
 
 ### 1. Build the Lambda Packages
 
-The project provides flexible options for building Lambda deployment packages:
+The project uses **Lambda layers** to separate dependencies from application code, enabling fast deployments and efficient caching.
 
 ```bash
 # Option 1: Build both API and worker packages from repository root
@@ -101,15 +101,31 @@ The project provides flexible options for building Lambda deployment packages:
 # Option 2: Build only the API package
 ./api/build_lambda_package.sh
 
-# Option 3: Build only the worker package (with optional version)
-./worker/build_lambda_package.sh [version]
+# Option 3: Build only the worker package
+./worker/build_lambda_package.sh
 ```
 
-These scripts can be run from either the repository root or their respective directories. The API package uses the git commit hash for versioning, while the worker package uses either the provided version parameter or a timestamp.
+These scripts can be run from either the repository root or their respective directories.
 
-This creates deployment packages at:
-- API: `api/build/packages/api-package-<git-hash>.zip`
-- Worker: `worker/build/packages/worker-package-<version>.zip`
+**What gets built:**
+
+Each build creates two artifacts:
+
+1. **Lambda Layer** (dependencies only) - Cached by hash of `uv.lock`
+   - API: `api/build/layers/<hash>-api-libs.zip`
+   - Worker: `worker/build/layers/<hash>-worker-libs.zip`
+   - Only rebuilt when dependencies change (detected via `uv.lock` hash)
+
+2. **Application Package** (code only) - Built every time
+   - API: `api/build/packages/api-<git-hash>.zip`
+   - Worker: `worker/build/packages/worker-<git-hash>.zip`
+   - Small and fast to deploy (~KB vs ~MB)
+
+**Layer Caching:**
+- Layers are named using a hash of the `uv.lock` file
+- If the hash matches an existing layer (locally or in AWS), it's reused
+- Dependencies typically change rarely, so most deployments skip the layer build
+- This dramatically speeds up iterative development and CI/CD
 
 ### 2. Provision AWS Infrastructure
 
@@ -211,19 +227,26 @@ uv run pulumi up -y
 
 Pulumi automatically detects new code versions using the build artifacts:
 
-- **API Package**: `api/build/packages/api-package-<git-hash>.zip`
+- **API Package**: `api/build/packages/api-<git-hash>.zip`
   - Version is based on the current git commit SHA
   - Appends `-SNAPSHOT` if there are uncommitted changes
 
-- **Worker Package**: `worker/build/packages/worker-package-<git-hash>.zip`
+- **Worker Package**: `worker/build/packages/worker-<git-hash>.zip`
   - Version is based on the current git commit SHA
   - Appends `-SNAPSHOT` if there are uncommitted changes
+
+- **Lambda Layers**: `api/build/layers/<hash>-api-libs.zip` and `worker/build/layers/<hash>-worker-libs.zip`
+  - Layer names are based on SHA256 hash of `uv.lock` file
+  - Pulumi checks if layer exists in AWS by name
+  - If exists → reuses it; if not → publishes new layer version
+  - Dependencies rarely change, so layers are typically reused
 
 When you run `pulumi up`:
 1. Pulumi checks the `app_version` config (default: `latest`)
 2. If set to `latest`, it finds the newest zip file by timestamp
-3. Detects the version has changed from the deployed Lambda
-4. Updates the Lambda function code with the new package
+3. Checks if Lambda layers exist in AWS (by hash-based name)
+4. Publishes layers only if they don't exist
+5. Updates Lambda function code with the new package and layer ARNs
 
 ### Deploy to Specific Stack
 
@@ -348,8 +371,9 @@ This project uses GitHub Actions for continuous integration and deployment with 
 3. **CD Workflow:**
    - Runs automatically when code is pushed to `main` (dev environment) or `releases/demo` (demo environment)
    - Uses AWS OIDC authentication for secure access to AWS resources
-   - Downloads Lambda packages built by the CI workflow
-   - Deploys the infrastructure using Pulumi
+   - Downloads Lambda packages and layers built by the CI workflow
+   - Deploys the infrastructure using Pulumi (publishes layers only if needed)
+   - Fast deployments: app code updates in seconds, layers cached by hash
 
 4. **AWS Authentication:**
    - Uses OIDC (OpenID Connect) for secure authentication to AWS
@@ -396,7 +420,7 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ✅ CI/CD with GitHub Actions
 - ✅ Codecov integration
 - ✅ Monitoring, alerting ([docs](docs/monitoring.md))
-- ⬜ Lambda layers optimization for faster deployments
+- ✅ Lambda layers optimization for faster deployments
 - ⬜ tracing, backups, with optional integration with Incidents Manager / Incident.io
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration

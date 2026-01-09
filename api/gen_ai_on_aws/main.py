@@ -23,7 +23,7 @@ app = FastAPI(
     debug=settings.fastapi_debug,
     contact={
         "name": "Yorrick Jansen",
-        "email": "info@yorrickjansen.com",
+        "email": "yorrick@yorrickjansen.com",
     },
 )
 
