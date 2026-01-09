@@ -45,14 +45,14 @@ app_version = config.require("app_version")
 model_name = config.require("model_name")
 
 if app_version == "latest":
-    # find the latest file named `api-package-*.zip` in the `api/build/packages` folder, using file timestamp
-    list_of_files = glob.glob("../api/build/packages/api-package-*.zip")
+    # find the latest file named `api-*.zip` in the `api/build/packages` folder, using file timestamp
+    list_of_files = glob.glob("../api/build/packages/api-*.zip")
     latest_file = max(list_of_files, key=os.path.getctime)
     print(f"Using latest app version: {latest_file}")
     code = pulumi.FileArchive(latest_file)
 else:
     print(f"Using app version: {app_version}")
-    code = pulumi.FileArchive(f"../api/build/packages/api-package-{app_version}.zip")
+    code = pulumi.FileArchive(f"../api/build/packages/api-{app_version}.zip")
 
 ######################
 ## SQS Queue and DLQ
@@ -182,7 +182,7 @@ lambda_func = aws.lambda_.Function(
 worker_version = config.get("worker_version", "latest")
 
 if worker_version == "latest":
-    list_of_files = glob.glob("../worker/build/packages/worker-package-*.zip")
+    list_of_files = glob.glob("../worker/build/packages/worker-*.zip")
     if list_of_files:
         latest_worker_file = max(list_of_files, key=os.path.getctime)
         print(f"Using latest worker version: {latest_worker_file}")
@@ -193,7 +193,7 @@ if worker_version == "latest":
 else:
     print(f"Using worker version: {worker_version}")
     worker_code = pulumi.FileArchive(
-        f"../worker/build/packages/worker-package-{worker_version}.zip"
+        f"../worker/build/packages/worker-{worker_version}.zip"
     )
 
 if worker_code:
