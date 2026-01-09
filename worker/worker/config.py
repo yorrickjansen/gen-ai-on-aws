@@ -26,7 +26,7 @@ class LangFuseConfig(BaseModel):
 class Settings(BaseSettings):
     """Settings for the worker."""
 
-    model: str = "anthropic/claude-3-5-sonnet-20241022"
+    model: str = "anthropic/claude-sonnet-4-5-20250929"
     stack_name: str = "dev"  # Default to dev for testing
     logging_level: str = "INFO"
     anthropic_api_key_secret_name: str | None = None

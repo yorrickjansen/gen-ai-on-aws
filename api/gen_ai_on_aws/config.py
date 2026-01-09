@@ -20,7 +20,7 @@ except ImportError:
 class Settings(BaseSettings):
     """Settings for the application."""
 
-    model: str = "anthropic/claude-3-5-sonnet-20241022"
+    model: str = "anthropic/claude-sonnet-4-5-20250929"
     stack_name: str
     fastapi_debug: bool = False
     logging_level: str = "INFO"

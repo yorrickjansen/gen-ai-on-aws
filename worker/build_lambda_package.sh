@@ -36,7 +36,7 @@ uv export --frozen --no-dev --no-editable -o "build/requirements-${SHORT_SHA}.tx
 uv pip install \
    --no-installer-metadata \
    --no-compile-bytecode \
-   --python-platform x86_64-manylinux2014 \
+   --python-platform x86_64-manylinux_2_17 \
    --python 3.13 \
    --target "build/packages/${SHORT_SHA}" \
    -r "build/requirements-${SHORT_SHA}.txt"

@@ -161,13 +161,14 @@ aws secretsmanager create-secret \
 ### 5. Deploy Resources
 
 ```bash
+# ./build_lambda_packages.sh just for first "pulumi up"
 uv run pulumi up -y
 ```
 
 ### 6. Test the Deployment
 
 ```bash
-http POST $(pulumi stack output apigatewayv2-http-endpoint)"/examples/extract-user" \
+http POST $(pulumi stack output apigatewayv2-http-endpoint)"examples/extract-user" \
   text="My name is Bob, I am 40 years old"
 ```
 
@@ -176,6 +177,83 @@ http POST $(pulumi stack output apigatewayv2-http-endpoint)"/examples/extract-us
 ```bash
 aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
 ```
+
+## Manual Redeployment
+
+After making code changes, you can manually redeploy without using the CI/CD pipeline:
+
+### Quick Redeploy
+
+```bash
+# From repository root
+./api/build_lambda_package.sh && \
+./worker/build_lambda_package.sh && \
+cd provisioning && \
+uv run pulumi up -y
+```
+
+### Step-by-Step Redeploy
+
+```bash
+# 1. Build new Lambda packages (creates versioned zip files)
+./api/build_lambda_package.sh       # Creates api-package-<git-hash>.zip
+./worker/build_lambda_package.sh    # Creates worker-package-<git-hash>.zip
+
+# 2. Preview changes (optional)
+cd provisioning
+uv run pulumi preview
+
+# 3. Deploy updates
+uv run pulumi up -y
+```
+
+### How Version Detection Works
+
+Pulumi automatically detects new code versions using the build artifacts:
+
+- **API Package**: `api/build/packages/api-package-<git-hash>.zip`
+  - Version is based on the current git commit SHA
+  - Appends `-SNAPSHOT` if there are uncommitted changes
+
+- **Worker Package**: `worker/build/packages/worker-package-<git-hash>.zip`
+  - Version is based on the current git commit SHA
+  - Appends `-SNAPSHOT` if there are uncommitted changes
+
+When you run `pulumi up`:
+1. Pulumi checks the `app_version` config (default: `latest`)
+2. If set to `latest`, it finds the newest zip file by timestamp
+3. Detects the version has changed from the deployed Lambda
+4. Updates the Lambda function code with the new package
+
+### Deploy to Specific Stack
+
+```bash
+cd provisioning
+
+# Switch to a different stack
+uv run pulumi stack select dev    # or demo, prod, yorrick
+
+# Deploy to that stack
+uv run pulumi up -y
+```
+
+### Deploy Specific Version
+
+```bash
+cd provisioning
+
+# Deploy a specific git commit version
+uv run pulumi config set app_version abc123f
+uv run pulumi config set worker_version abc123f
+uv run pulumi up -y
+
+# Or go back to latest
+uv run pulumi config set app_version latest
+uv run pulumi config set worker_version latest
+uv run pulumi up -y
+```
+
+**Note:** Manual deployment is useful for development and testing. For production deployments, use the CI/CD pipeline for better traceability and rollback capabilities.
 
 ## Advanced Configuration
 
@@ -318,6 +396,8 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ✅ CI/CD with GitHub Actions
 - ✅ Codecov integration
 - ✅ Monitoring, alerting ([docs](docs/monitoring.md))
+- ⬜ Lambda layers optimization for faster deployments
+- ⬜ tracing, backups, with optional integration with Incidents Manager / Incident.io
 - ⬜ LLM chain/pattern examples
 - ⬜ Demo of n8n integration
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
@@ -327,8 +407,6 @@ See the [CI/CD workflow files](.github/workflows/) for detailed configuration.
 - ⬜ Cost tracking and alerts
 - ⬜ Demo of Bedrock, Kendra, Lex, etc... integration
 - ⬜ Custom domain name, SSL certificate, IP whitelisting, usage plans to restrict access to API
-- ⬜ tracing, backups, with optional integration with Incidents Manager / Pager Duty
-- ⬜ Lambda layers optimization for faster deployments
 - ⬜ Progressive deployments for improved reliability in production (using CodeDeploy, triggered from GH Actions)
 - ⬜ Frontend implementation for demo (optional websocket push)
 - ⬜ Scaling configuration for Lambda functions (concurrency, memory, timeout)
