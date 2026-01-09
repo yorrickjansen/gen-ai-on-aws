@@ -463,9 +463,10 @@ git commit --no-verify
 - ✅ Codecov integration
 - ✅ Monitoring, alerting ([docs](docs/monitoring.md))
 - ✅ Lambda layers optimization for faster deployments
+- ⬜ Use pyright for type checking
+- ⬜ Add dependency scanning with github, to create PRs to bump packages
 - ⬜ tracing, backups, with optional integration with Incidents Manager / Incident.io
 - ⬜ LLM chain/pattern examples
-- ⬜ Demo of n8n integration
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation
 - ⬜ RAG with Aurora PostgreSQL
 - ⬜ VPC setup for Lambda functions and Aurora PostgreSQL

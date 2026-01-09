@@ -54,14 +54,26 @@ $DIFF
 \`\`\`"
 
 # Run Claude Code in prompt mode
-RESPONSE=$(echo "$PROMPT" | claude -p 2>&1)
+RAW_RESPONSE=$(echo "$PROMPT" | claude -p 2>&1)
+
+# Strip markdown code blocks if present (Claude often wraps JSON in ```json...```)
+# Try to extract JSON from markdown code blocks
+JSON_RESPONSE=$(echo "$RAW_RESPONSE" | sed -n '/^```json$/,/^```$/p' | sed '1d;$d')
+
+# If no markdown blocks found, use raw response
+if [ -z "$JSON_RESPONSE" ]; then
+    JSON_RESPONSE="$RAW_RESPONSE"
+fi
 
 # Check if response is valid JSON
-if ! echo "$RESPONSE" | jq empty 2>/dev/null; then
+if ! echo "$JSON_RESPONSE" | jq empty 2>/dev/null; then
     echo "⚠️  Warning: Could not parse Claude response. Allowing commit."
-    echo "   Response: $RESPONSE"
+    echo "   Raw response:"
+    echo "$RAW_RESPONSE"
     exit 0
 fi
+
+RESPONSE="$JSON_RESPONSE"
 
 # Parse the response
 BLOCK_COMMIT=$(echo "$RESPONSE" | jq -r '.block_commit // false')

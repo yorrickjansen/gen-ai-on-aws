@@ -39,6 +39,15 @@
     ```
 
 ## Testing & Reliability
+
+### Testing Requirement
+**EVERY change MUST be tested - either with unit tests or manual tests. No exceptions.**
+
+- **For application code (Python functions, classes, API routes)**: Write Pytest unit tests
+- **For infrastructure, scripts, and tooling**: Use manual testing procedures (see below)
+- **Document the test approach**: Either add unit tests or document the manual test procedure in the PR/commit
+
+### Unit Testing
 - **Always create Pytest unit tests for new features** (e.g., functions, classes, API routes).
 - **Update existing unit tests** whenever the logic they cover is modified.
 - **Organize tests in a top-level `/tests` directory** that mirrors the main application's structure.
@@ -47,8 +56,91 @@
   - One test for a known edge case.
   - One test for an expected failure or error case.
 - **Always run the full test suite from the project root** after implementing any change to verify that nothing has broken (e.g., `uv run pytest`).
-- **When implementing cli commands, test them with 'virtual-receptionist n8n --help' and 'virtual-receptionist n8n get-executions --help' for instance, to test n8n**
-- **Then, run other tests for read-only commands**
+
+### Manual Testing Procedures
+
+When unit tests are not practical (build scripts, pre-commit hooks, infrastructure), follow these manual test procedures:
+
+#### Lambda Packaging Scripts (`build_lambda_package.sh`)
+```bash
+# Test clean build
+rm -rf api/build/ && ./api/build_lambda_package.sh
+
+# Test layer caching (should skip layer rebuild)
+./api/build_lambda_package.sh
+
+# Test with dependency changes
+echo "# test" >> api/uv.lock && ./api/build_lambda_package.sh
+
+# Verify artifacts
+ls -lh api/build/packages/
+ls -lh api/build/layers/
+
+# Test deployment
+cd provisioning && uv run pulumi up -y
+
+# Verify Lambda works
+http POST $(pulumi stack output apigatewayv2-http-endpoint)examples/extract-user text="test"
+```
+
+#### Pre-commit Hooks (`.github/hooks/`)
+```bash
+# Install hooks
+pre-commit install
+
+# Test with clean diff
+echo "safe code" > test_file.py
+git add test_file.py
+git commit -m "test: safe commit"  # Should pass
+
+# Test with sensitive data (should block)
+echo 'API_KEY = "sk-proj-real-looking-key-1234567890"' > test_secret.py
+git add test_secret.py
+git commit -m "test: should block"  # Should be blocked
+
+# Test with placeholder (should allow)
+echo 'API_KEY = "YOUR_API_KEY_HERE"' > test_placeholder.py
+git add test_placeholder.py
+git commit -m "test: should allow placeholder"  # Should pass
+
+# Clean up test files
+git reset HEAD
+rm -f test_file.py test_secret.py test_placeholder.py
+```
+
+#### Infrastructure Changes (Pulumi)
+```bash
+# Test infrastructure preview
+cd provisioning
+uv run pulumi preview
+
+# Test deployment to dev stack
+uv run pulumi stack select dev
+uv run pulumi up -y
+
+# Verify resources created
+aws lambda get-function --function-name $(pulumi stack output lambda_function_name)
+aws lambda list-layer-versions --layer-name $(pulumi config get app_version)
+
+# Test rollback capability
+uv run pulumi stack export > backup.json
+```
+
+#### API Endpoints
+```bash
+# Start local server
+cd api && uv run uvicorn gen_ai_on_aws.main:app --reload
+
+# Test endpoints locally
+http POST http://localhost:8000/examples/extract-user text="test data"
+
+# Deploy and test on AWS
+cd ../provisioning && uv run pulumi up -y
+http POST $(pulumi stack output apigatewayv2-http-endpoint)examples/extract-user text="test data"
+
+# Monitor logs
+aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
+```
 
 ## Documentation & Explainability
 - **Update `README.md`** when new features are added, dependencies change, or setup steps are modified.
