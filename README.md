@@ -431,6 +431,9 @@ An AI-powered pre-commit hook scans for sensitive data before each commit:
 - Personally Identifiable Information (PII)
 
 **Features:**
+- **Two-tier detection** for optimal performance:
+  - Fast regex pre-filter checks for common patterns (< 1s)
+  - AI analysis with Claude Haiku only if regex finds potential secrets
 - Smart detection that distinguishes real secrets from placeholders
 - Blocks commits with high-risk findings (private keys, real credentials)
 - Allows low-risk findings with warnings

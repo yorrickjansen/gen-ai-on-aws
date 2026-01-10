@@ -1,19 +1,57 @@
 #!/usr/bin/env bash
-# Pre-commit hook to detect sensitive data using Claude Code
+# Pre-commit hook to detect sensitive data using regex + Claude Code
 set -e
 
-# Check if claude CLI is available
-if ! command -v claude &> /dev/null; then
-    echo "⚠️  Warning: 'claude' CLI not found. Skipping secrets check."
-    echo "   Install Claude Code to enable this check: https://claude.com/claude-code"
-    exit 0
-fi
-
-# Get the staged diff
-DIFF=$(git diff --cached --diff-filter=d)
+# Get the staged diff, excluding this script itself to avoid false positives
+DIFF=$(git diff --cached --diff-filter=d -- ':!.github/hooks/check-secrets.sh')
 
 # Skip if no changes
 if [ -z "$DIFF" ]; then
+    exit 0
+fi
+
+# Fast pre-filter: Check for common secret patterns with regex
+# Only run expensive Claude check if regex finds potential secrets
+echo "🔍 Running quick regex check for secrets..."
+
+# Extract only added lines (lines starting with +)
+ADDED_LINES=$(echo "$DIFF" | grep '^+' | grep -v '^+++' || true)
+
+if [ -z "$ADDED_LINES" ]; then
+    exit 0
+fi
+
+# Define regex patterns for common secrets
+# These are broad patterns - Claude will do detailed analysis if any match
+REGEX_FOUND=false
+
+# Combine all checks into one grep call for performance
+# Using extended regex for BSD grep compatibility (macOS)
+if echo "$ADDED_LINES" | grep -qE \
+    -e 'A[SK]IA[0-9A-Z]{16}' \
+    -e 'sk-[A-Za-z0-9-]{20,}' \
+    -e 'gh[pouse]_[0-9A-Za-z]{36}' \
+    -e 'BEGIN.{1,20}PRIVATE KEY' \
+    -e '(api|access|secret).{0,5}(key|token).{0,5}[:=].{0,5}["\047][A-Za-z0-9_-]{20,}' \
+    -e '(postgres|mysql|mongodb|jdbc)://[^"'\'' ]{10,}' \
+    -e 'ey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' \
+    -e '(password|passwd|pwd).{0,5}[:=].{0,5}["\047][A-Za-z0-9_-]{8,}' \
+    2>/dev/null; then
+    REGEX_FOUND=true
+fi
+
+# If no regex patterns matched, skip expensive Claude check
+if [ "$REGEX_FOUND" = false ]; then
+    echo "✓ No potential secrets detected (regex pre-filter passed)"
+    exit 0
+fi
+
+echo "⚠️  Potential secrets detected by regex, running detailed AI analysis..."
+
+# Check if claude CLI is available
+if ! command -v claude &> /dev/null; then
+    echo "⚠️  Warning: 'claude' CLI not found. Allowing commit (regex found potential secrets but cannot verify)."
+    echo "   Install Claude Code to enable AI-powered verification: https://claude.com/claude-code"
     exit 0
 fi
 
@@ -53,23 +91,32 @@ Diff to analyze:
 $DIFF
 \`\`\`"
 
-# Run Claude Code in prompt mode
-RAW_RESPONSE=$(echo "$PROMPT" | claude -p 2>&1)
+# Run Claude Code in prompt mode with fast model (Haiku)
+RAW_RESPONSE=$(echo "$PROMPT" | claude -p --model haiku 2>&1)
 
-# Strip markdown code blocks if present (Claude often wraps JSON in ```json...```)
-# Try to extract JSON from markdown code blocks
+# Extract JSON from response (handle markdown blocks, explanations, etc.)
+# Try multiple extraction strategies
+JSON_RESPONSE=""
+
+# Strategy 1: Extract from markdown code blocks
 JSON_RESPONSE=$(echo "$RAW_RESPONSE" | sed -n '/^```json$/,/^```$/p' | sed '1d;$d')
 
-# If no markdown blocks found, use raw response
+# Strategy 2: If no markdown, try to find JSON object directly
 if [ -z "$JSON_RESPONSE" ]; then
+    # Extract first complete JSON object (from first { to matching })
+    # This regex works for single-line JSON
+    JSON_RESPONSE=$(echo "$RAW_RESPONSE" | perl -0777 -ne 'print $1 if /({"block_commit".*?"findings".*?\[.*?\]})/s' | head -1)
+fi
+
+# Strategy 3: Use the entire response if it starts with {
+if [ -z "$JSON_RESPONSE" ] && echo "$RAW_RESPONSE" | grep -q '^{'; then
     JSON_RESPONSE="$RAW_RESPONSE"
 fi
 
-# Check if response is valid JSON
-if ! echo "$JSON_RESPONSE" | jq empty 2>/dev/null; then
+# Check if we found valid JSON
+if [ -z "$JSON_RESPONSE" ] || ! echo "$JSON_RESPONSE" | jq empty 2>/dev/null; then
     echo "⚠️  Warning: Could not parse Claude response. Allowing commit."
-    echo "   Raw response:"
-    echo "$RAW_RESPONSE"
+    echo "   (This might be due to a formatting issue with the AI response)"
     exit 0
 fi
 
