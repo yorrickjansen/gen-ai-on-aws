@@ -15,15 +15,6 @@ repos:
     # Run the formatter.
     - id: ruff-format
       types_or: [ python, pyi ]
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-    -   id: isort
-        args: ["--profile", "black"]
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
-    hooks:
-    -   id: pyupgrade
 -   repo: local
     hooks:
     -   id: check-secrets

@@ -16,7 +16,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "devtools>=0.12.2",
-    "isort>=6.0.1",
+    "pyright>=1.1.390",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.25.3",
     "pytest-cov>=5.0.0",
@@ -28,3 +28,40 @@ pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "-p no:warnings"
+
+[tool.pyright]
+include = ["."]
+exclude = [
+  "build",
+  "**/venv",
+  "**/.venv",
+  "**/env",
+  "**/__pycache__",
+  "**/.pytest_cache",
+  "**/dist",
+  "**/.egg-info",
+  "**/.mypy_cache",
+  "**/.ruff_cache"
+]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+  "E",  # pycodestyle errors
+  "W",  # pycodestyle warnings
+  "F",  # pyflakes
+  "I",  # isort
+  "B",  # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "UP", # pyupgrade
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

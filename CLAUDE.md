@@ -16,7 +16,7 @@
 ## Style & Conventions
 - **Use Python** as the primary language.
 - **Follow PEP8 standards.** Use type hints for all function signatures and variables where appropriate.
-- **Format code with `ruff` and lint with `pyright`.** Always run `ruff format .` and `pyright .` after generating or modifying code to ensure compliance.
+- **Format and lint with `ruff`, type check with `pyright`.** Always run `ruff format .` and `pyright .` after generating or modifying code to ensure compliance. Ruff handles both formatting and linting - do not use black or isort.
 - **Use `pydantic` for data validation.** Define Pydantic models in `models.py` files within each relevant package.
 - **Use `FastAPI` for APIs** and `SQLAlchemy` or `SQLModel` for the ORM, if applicable.
 - **Always use Typer library for cli commands**
@@ -191,9 +191,9 @@ VERY IMPORTANT: each directory has its own pyproject.toml file, with its own dep
 - Single test: `pytest app/gen_ai_on_aws/examples/test_examples.py::test_hello`
 
 ## Code Style
-- Format: Ruff (with Black profile)
-- Linting: Ruff
-- Import sorting: isort with Black profile
+- Format: Ruff (`ruff format`)
+- Linting: Ruff (`ruff check`)
+- Type checking: Pyright (`pyright`)
 - Pre-commit hooks configured for automation
 - Type annotations used extensively
 
