@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 
 
 class ExtractUserRequest(BaseModel):
+    """Request model for extracting user information from text."""
+
     text: str = Field(description="The text to extract user information from.")
 
 

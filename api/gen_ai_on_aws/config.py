@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import TYPE_CHECKING
 
 import boto3
 import litellm
@@ -11,11 +12,15 @@ from gen_ai_on_aws.types import LangFuseConfig
 # Setup module logger based on environment configuration
 logger = logging.getLogger(__name__)
 
-
-try:
-    from gen_ai_on_aws.version import VERSION
-except ImportError:
-    VERSION = "local"
+# Version handling: try to import from version.py (generated during build),
+# fallback to "local" for development
+if TYPE_CHECKING:
+    VERSION: str = "local"
+else:
+    try:
+        from gen_ai_on_aws.version import VERSION
+    except ImportError:
+        VERSION = "local"
 
 
 class Settings(BaseSettings):

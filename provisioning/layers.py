@@ -43,7 +43,7 @@ def layer_exists_in_aws(layer_name: str) -> str | None:
 
 
 def publish_layer_via_cli(
-    layer_name: str, layer_zip_path: str, compatible_runtimes: list[str] = None
+    layer_name: str, layer_zip_path: str, compatible_runtimes: list[str] | None = None
 ) -> str:
     """Publish a new Lambda layer version using AWS CLI.
 
@@ -84,7 +84,7 @@ def get_or_create_layer(
     deps_hash: str,
     layer_zip_path: str,
     description: str = "",
-    compatible_runtimes: list[str] = None,
+    compatible_runtimes: list[str] | None = None,
 ) -> str:
     """Get existing Lambda layer or create a new one.
 

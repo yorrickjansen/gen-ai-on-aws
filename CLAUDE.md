@@ -17,7 +17,7 @@
 ## Style & Conventions
 - **Use Python** as the primary language.
 - **Follow PEP8 standards.** Use type hints for all function signatures and variables where appropriate.
-- **Format and lint with `ruff`, type check with `pyright`.** Always run `ruff format .` and `pyright .` after generating or modifying code to ensure compliance. Ruff handles both formatting and linting - do not use black or isort.
+- **Code quality tools**: The project uses `ruff` for formatting and linting, and `pyright` for type checking. These tools run automatically via post-edit hooks (configured in `.claude/settings.json`).
 - **Use `pydantic` for data validation.** Define Pydantic models in `models.py` files within each relevant package.
 - **Use `FastAPI` for APIs** and `SQLAlchemy` or `SQLModel` for the ORM, if applicable.
 - **Always use Typer library for cli commands**
@@ -223,12 +223,13 @@ VERY IMPORTANT: each directory has its own pyproject.toml file, with its own dep
 - Run tests: `pytest` or `pytest app/gen_ai_on_aws/examples/test_examples.py`
 - Single test: `pytest app/gen_ai_on_aws/examples/test_examples.py::test_hello`
 
-## Code Style
-- Format: Ruff (`ruff format`)
-- Linting: Ruff (`ruff check`)
-- Type checking: Pyright (`pyright`)
-- Pre-commit hooks configured for automation
-- Type annotations used extensively
+## Code Quality Automation
+- **Format**: Ruff (`ruff format`)
+- **Linting**: Ruff (`ruff check`)
+- **Type checking**: Pyright (`pyright`)
+- **Automation**: Post-edit hooks automatically run these tools on every file edit (see `.claude/settings.json`)
+- **Pre-commit hooks**: Configured for commit-time validation
+- **Type annotations**: Used extensively throughout the codebase
 
 ## Conventions
 - Descriptive function names (snake_case)

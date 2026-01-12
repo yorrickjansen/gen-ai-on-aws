@@ -15,15 +15,29 @@ repos:
     # Run the formatter.
     - id: ruff-format
       types_or: [ python, pyi ]
--   repo: local
-    hooks:
-    -   id: check-secrets
-        name: Claude Code - Check for secrets
-        entry: .github/hooks/check-secrets.sh
-        language: script
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
+- repo: local
+  hooks:
+    - id: pyright
+      name: pyright
+      entry: bash -c 'cd api && uv run pyright'
+      language: system
+      types: [python]
+      pass_filenames: false
+      files: ^api/
+    - id: pyright-provisioning
+      name: pyright (provisioning)
+      entry: bash -c 'cd provisioning && uv run pyright'
+      language: system
+      types: [python]
+      pass_filenames: false
+      files: ^provisioning/
+    - id: check-secrets
+      name: Claude Code - Check for secrets
+      entry: .github/hooks/check-secrets.sh
+      language: script
+      pass_filenames: false
+      always_run: true
+      stages: [pre-commit]
 # -   repo: https://github.com/pre-commit/mirrors-mypy
 #     rev: v1.14.1
 #     hooks:

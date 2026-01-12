@@ -196,6 +196,9 @@ else:
         f"../worker/build/packages/worker-{worker_version}.zip"
     )
 
+# Initialize worker_lambda to None (will be set if worker_code exists)
+worker_lambda: aws.lambda_.Function | None = None
+
 if worker_code:
     # Get or create Worker Lambda layer (hash-based, cached in AWS)
     worker_layer_arn = layers.get_layer_for_lambda(
@@ -316,7 +319,7 @@ pulumi.export(
 pulumi.export("lambda_function_name", lambda_func.name)
 pulumi.export("sqs_queue_url", sqs_queue.url)
 pulumi.export("dlq_url", dlq.url)
-if worker_code:
+if worker_lambda:
     pulumi.export("worker_lambda_function_name", worker_lambda.name)
 
 ##########################
@@ -327,7 +330,7 @@ if worker_code:
 monitoring_email = config.get("monitoring_email")
 
 # Get the worker lambda to pass to monitoring (could be None)
-worker_lambda_instance = worker_lambda if worker_code else None
+worker_lambda_instance = worker_lambda
 
 # Create monitoring resources (CloudWatch alarms, dashboard, and optional SNS topic)
 monitoring_resources, dashboard_url = monitoring.create_monitoring_resources(
