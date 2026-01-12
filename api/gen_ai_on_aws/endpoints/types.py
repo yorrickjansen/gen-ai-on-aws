@@ -27,3 +27,21 @@ class SupabaseReadRequest(BaseModel):
 
 class SupabaseReadResponse(BaseModel):
     data: list[Any] = Field(description="The data returned from Supabase")
+
+
+class ElevenLabsWebhookPayload(BaseModel):
+    """Request payload from 11Labs conversation initiation webhook."""
+
+    caller_id: str = Field(description="The phone number of the caller")
+    agent_id: str = Field(description="The ID of the 11Labs agent")
+    called_number: str = Field(description="The number that was called")
+    call_sid: str = Field(description="The unique call session ID")
+    conversation_id: str = Field(description="The unique conversation ID")
+
+
+class ElevenLabsWebhookResponse(BaseModel):
+    """Response for 11Labs conversation initiation webhook."""
+
+    dynamic_variables: dict[str, Any] = Field(
+        description="Dynamic variables to inject into the agent conversation"
+    )

@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     langfuse_host: str = "https://us.cloud.langfuse.com"
     supabase_url: str | None = None
     supabase_key: str | None = None
+    elevenlabs_webhook_auth: str | None = None
 
     # AWS Secrets Manager secret names (for AWS deployment)
     anthropic_api_key_secret_name: str | None = None
@@ -45,6 +46,7 @@ class Settings(BaseSettings):
     langfuse_secret_key_secret_name: str | None = None
     supabase_url_secret_name: str | None = None
     supabase_key_secret_name: str | None = None
+    elevenlabs_webhook_auth_secret_name: str | None = None
 
     sqs_queue_url: str | None = None
 
@@ -193,3 +195,6 @@ else:
     if settings.supabase_url and settings.supabase_key:
         os.environ["SUPABASE_URL"] = settings.supabase_url
         os.environ["SUPABASE_KEY"] = settings.supabase_key
+
+    if settings.elevenlabs_webhook_auth:
+        os.environ["ELEVENLABS_WEBHOOK_AUTH"] = settings.elevenlabs_webhook_auth
