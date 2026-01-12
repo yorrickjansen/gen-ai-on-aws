@@ -43,13 +43,19 @@ def layer_exists_in_aws(layer_name: str) -> str | None:
 
 
 def publish_layer_via_cli(
-    layer_name: str, layer_zip_path: str, compatible_runtimes: list[str] | None = None
+    layer_name: str,
+    layer_zip_path: str,
+    s3_bucket: str,
+    compatible_runtimes: list[str] | None = None,
 ) -> str:
     """Publish a new Lambda layer version using AWS CLI.
+
+    Always uploads to S3 first, then publishes from S3.
 
     Args:
         layer_name: Name of the layer
         layer_zip_path: Path to the layer zip file
+        s3_bucket: S3 bucket name for layer storage
         compatible_runtimes: List of compatible Lambda runtimes
 
     Returns:
@@ -58,6 +64,21 @@ def publish_layer_via_cli(
     if compatible_runtimes is None:
         compatible_runtimes = ["python3.13"]
 
+    # Upload to S3
+    s3_key = f"lambda-layers/{layer_name}.zip"
+    file_size = os.path.getsize(layer_zip_path)
+    pulumi.log.info(
+        f"Uploading layer ({file_size / (1024 * 1024):.1f}MB) to S3: s3://{s3_bucket}/{s3_key}"
+    )
+
+    subprocess.run(
+        ["aws", "s3", "cp", layer_zip_path, f"s3://{s3_bucket}/{s3_key}"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    # Publish layer from S3
     result = subprocess.run(
         [
             "aws",
@@ -65,8 +86,8 @@ def publish_layer_via_cli(
             "publish-layer-version",
             "--layer-name",
             layer_name,
-            "--zip-file",
-            f"fileb://{layer_zip_path}",
+            "--content",
+            f"S3Bucket={s3_bucket},S3Key={s3_key}",
             "--compatible-runtimes",
             *compatible_runtimes,
         ],
@@ -83,6 +104,7 @@ def get_or_create_layer(
     name: str,
     deps_hash: str,
     layer_zip_path: str,
+    s3_bucket: str,
     description: str = "",
     compatible_runtimes: list[str] | None = None,
 ) -> str:
@@ -98,6 +120,7 @@ def get_or_create_layer(
         name: Base name for the layer (e.g., "api" or "worker")
         deps_hash: Hash of the dependencies (from uv.lock)
         layer_zip_path: Path to the layer zip file
+        s3_bucket: S3 bucket name for layer storage
         description: Description for the layer
         compatible_runtimes: List of compatible Lambda runtimes
 
@@ -122,14 +145,14 @@ def get_or_create_layer(
         # Layer doesn't exist - publish it using AWS CLI (not Pulumi resource)
         pulumi.log.info(f"Publishing new {name} layer from {layer_zip_path}")
         layer_arn = publish_layer_via_cli(
-            layer_name, layer_zip_path, compatible_runtimes
+            layer_name, layer_zip_path, s3_bucket, compatible_runtimes
         )
         pulumi.log.info(f"✓ Published {name} layer: {layer_arn}")
         return layer_arn
 
 
 def get_layer_for_lambda(
-    name: str, lock_file_path: str, build_dir: str = "build/layers"
+    name: str, lock_file_path: str, s3_bucket: str, build_dir: str = "build/layers"
 ) -> str:
     """Get the Lambda layer ARN for a given component.
 
@@ -141,6 +164,7 @@ def get_layer_for_lambda(
     Args:
         name: Component name (e.g., "api" or "worker")
         lock_file_path: Path to the uv.lock file (relative to project root)
+        s3_bucket: S3 bucket name for layer storage
         build_dir: Directory where layer zips are stored (relative to component)
 
     Returns:
@@ -158,5 +182,6 @@ def get_layer_for_lambda(
         name=name,
         deps_hash=deps_hash,
         layer_zip_path=layer_zip_path,
+        s3_bucket=s3_bucket,
         description=f"{name.capitalize()} dependencies (hash: {deps_hash})",
     )

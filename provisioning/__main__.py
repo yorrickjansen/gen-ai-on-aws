@@ -129,12 +129,22 @@ queue_policy = aws.sqs.QueuePolicy(
 )
 
 ##################
+## S3 Bucket for Lambda Layers
+##################
+
+# Use existing DevOps bucket for storing large Lambda layers (>50MB)
+layer_storage_bucket_name = "175314215331-devops-eu-central-1"
+
+##################
 ## Lambda Layers
 ##################
 
 # Get or create API Lambda layer (hash-based, cached in AWS)
 api_layer_arn = layers.get_layer_for_lambda(
-    name="api", lock_file_path="../api/uv.lock", build_dir="build/layers"
+    name="api",
+    lock_file_path="../api/uv.lock",
+    s3_bucket=layer_storage_bucket_name,  # Use string, not Output
+    build_dir="build/layers",
 )
 
 pulumi.export("api_layer_arn", api_layer_arn)
@@ -202,7 +212,10 @@ worker_lambda: aws.lambda_.Function | None = None
 if worker_code:
     # Get or create Worker Lambda layer (hash-based, cached in AWS)
     worker_layer_arn = layers.get_layer_for_lambda(
-        name="worker", lock_file_path="../worker/uv.lock", build_dir="build/layers"
+        name="worker",
+        lock_file_path="../worker/uv.lock",
+        s3_bucket=layer_storage_bucket_name,  # Use string, not Output
+        build_dir="build/layers",
     )
 
     pulumi.export("worker_layer_arn", worker_layer_arn)
