@@ -5,7 +5,7 @@ description = "Provisioning scripts for GenAI on AWS"
 requires-python = "==3.13.*"
 dependencies = [
     "pulumi>=3.0.0,<4.0.0",
-    "pulumi-aws>=6.0.2,<7.0.0",
+    "pulumi-aws>=6.0.2,<8.0.0",
 ]
 
 [dependency-groups]
