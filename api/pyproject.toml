@@ -8,9 +8,13 @@ dependencies = [
     "boto3>=1.37.5",
     # FastAPI is a modern web framework for building APIs with Python.
     "fastapi",
-    "instructor>=1.7.2",
-    "langfuse>=2.59.7",
-    "litellm>=1.62.1",
+    # Pinned versions for litellm+instructor+langfuse compatibility
+    # Issue: https://github.com/BerriAI/litellm/issues/17219
+    # Error in 1.80.0+: 'CompletionUsage' object has no attribute 'get'
+    # These versions are confirmed working together
+    "instructor==1.13.0",
+    "langfuse==2.60.8",
+    "litellm==1.74.6",
     # Mangum is a library that adapts ASGI applications to AWS Lambda and API Gateway.
     "mangum",
     "pydantic-settings>=2.2.2",

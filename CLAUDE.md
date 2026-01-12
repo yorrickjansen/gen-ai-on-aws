@@ -7,6 +7,8 @@
 - **Never use Firecrawl.** Always use Perplexity (`mcp__perplexity-ask__perplexity_ask`) for fetching web content and documentation.
 - **Always confirm file paths and module names** exist before referencing them in code or tests.
 - **Never delete or overwrite existing code** unless explicitly instructed to do so.
+- **CRITICAL: When mentioning known bugs or issues, ALWAYS provide the full GitHub issue URL.** This is non-negotiable and extremely important for transparency and verification.
+- **When implementing workarounds for known bugs, add code comments with the issue URL.** This helps future developers understand why specific workarounds exist.
 
 ## Code Structure & Modularity
 - **Keep files concise.** Never create a file longer than 500 lines of code. If a file approaches this limit, refactor it by splitting it into smaller, focused modules.
