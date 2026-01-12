@@ -1,14 +1,18 @@
 import logging
+import os
 
 import instructor
 from fastapi import APIRouter, Depends, HTTPException
 from langfuse.decorators import langfuse_context, observe
 from litellm import completion
+from supabase import AsyncClient, acreate_client
 
 from gen_ai_on_aws.config import VERSION, settings
 from gen_ai_on_aws.examples.types import (
     ExtractUserAsyncResponse,
     ExtractUserRequest,
+    SupabaseReadRequest,
+    SupabaseReadResponse,
     User,
 )
 from gen_ai_on_aws.services.queue_service import QueueService
@@ -30,6 +34,27 @@ def get_queue_service() -> QueueService:
     if not settings.sqs_queue_url:
         raise HTTPException(status_code=500, detail="SQS queue URL not configured")
     return QueueService(queue_url=settings.sqs_queue_url)
+
+
+async def get_supabase_client() -> AsyncClient:
+    """Dependency to get the Supabase async client.
+
+    Returns:
+        AsyncClient: The initialized Supabase async client
+
+    Raises:
+        HTTPException: If Supabase URL or key is not configured
+    """
+    supabase_url = os.environ.get("SUPABASE_URL")
+    supabase_key = os.environ.get("SUPABASE_KEY")
+
+    if not supabase_url or not supabase_key:
+        raise HTTPException(
+            status_code=500,
+            detail="Supabase URL and key must be configured in environment variables",
+        )
+
+    return await acreate_client(supabase_url, supabase_key)
 
 
 @router.get("/hello")
@@ -95,3 +120,41 @@ async def extract_user_async(
     langfuse_context.update_current_trace(metadata={"request_id": request_id})
 
     return ExtractUserAsyncResponse(request_id=request_id)
+
+
+@router.post("/supabase-read")
+async def supabase_read(
+    request: SupabaseReadRequest,
+    supabase_client: AsyncClient = Depends(get_supabase_client),
+) -> SupabaseReadResponse:
+    """Read data from a Supabase table.
+
+    Args:
+        request: The request containing table name, select columns, and optional limit
+        supabase_client: The Supabase async client dependency
+
+    Returns:
+        SupabaseReadResponse: Response containing the data from Supabase
+
+    Raises:
+        HTTPException: If there's an error reading from Supabase
+    """
+    logger.info(f"Reading from Supabase table: {request.table}")
+
+    try:
+        # Build the query
+        query = supabase_client.table(request.table).select(request.select)
+
+        # Apply limit if specified
+        if request.limit:
+            query = query.limit(request.limit)
+
+        # Execute the query
+        response = await query.execute()
+
+        return SupabaseReadResponse(data=response.data)
+    except Exception as e:
+        logger.error(f"Error reading from Supabase: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to read from Supabase: {str(e)}"
+        ) from e

@@ -14,6 +14,7 @@ dependencies = [
     # Mangum is a library that adapts ASGI applications to AWS Lambda and API Gateway.
     "mangum",
     "pydantic-settings>=2.2.2",
+    "supabase>=2.27.1",
 ]
 
 [dependency-groups]

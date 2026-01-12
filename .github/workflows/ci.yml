@@ -46,7 +46,6 @@ jobs:
       run: |
         uv run ruff check .
         uv run ruff format --check .
-        uv run isort --check-only --profile black .
 
   test-api:
     runs-on: ubuntu-latest

@@ -3,7 +3,8 @@
 ## Core Principles
 - **Never assume missing context.** Ask clarifying questions if the request is ambiguous or incomplete.
 - **Never hallucinate libraries or functions.** Only use known, verified Python packages. If unsure, use Perplexity to verify (never use WebSearch).
-- **Always use Perplexity for web research.** When you need to look up information, use the Perplexity MCP tool (`mcp__perplexity-ask__perplexity_ask`), not WebSearch.
+- **Always use Perplexity for web research.** When you need to look up information, use the Perplexity MCP tool (`mcp__perplexity-ask__perplexity_ask`), not WebSearch or Firecrawl.
+- **Never use Firecrawl.** Always use Perplexity (`mcp__perplexity-ask__perplexity_ask`) for fetching web content and documentation.
 - **Always confirm file paths and module names** exist before referencing them in code or tests.
 - **Never delete or overwrite existing code** unless explicitly instructed to do so.
 

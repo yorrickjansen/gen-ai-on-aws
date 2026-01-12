@@ -31,11 +31,15 @@ class Settings(BaseSettings):
     langfuse_public_key: str | None = None
     langfuse_secret_key: str | None = None
     langfuse_host: str = "https://us.cloud.langfuse.com"
+    supabase_url: str | None = None
+    supabase_key: str | None = None
 
     # AWS Secrets Manager secret names (for AWS deployment)
     anthropic_api_key_secret_name: str | None = None
     langfuse_public_key_secret_name: str | None = None
     langfuse_secret_key_secret_name: str | None = None
+    supabase_url_secret_name: str | None = None
+    supabase_key_secret_name: str | None = None
 
     sqs_queue_url: str | None = None
 
@@ -113,6 +117,34 @@ def get_langfuse_config_from_secrets_manager(stack_name: str) -> LangFuseConfig 
         return None
 
 
+def get_supabase_config_from_secrets_manager(stack_name: str) -> tuple[str, str] | None:
+    """Fetch Supabase configuration from AWS Secrets Manager.
+
+    Args:
+        stack_name: The stack name used to construct the secret names
+
+    Returns:
+        Tuple of (url, key) if successful, None otherwise
+    """
+    url_secret = settings.supabase_url_secret_name or f"gen-ai-on-aws/{stack_name}/supabase_url"
+    key_secret = settings.supabase_key_secret_name or f"gen-ai-on-aws/{stack_name}/supabase_key"
+
+    session = boto3.Session()
+    client = session.client(service_name="secretsmanager")
+
+    try:
+        url_response = client.get_secret_value(SecretId=url_secret)
+        key_response = client.get_secret_value(SecretId=key_secret)
+
+        return (
+            json.loads(url_response["SecretString"])["key"],
+            json.loads(key_response["SecretString"])["key"],
+        )
+    except Exception as e:
+        logger.error(f"Error fetching Supabase secrets: {e}")
+        return None
+
+
 # Configure secrets based on environment
 # When running in AWS Lambda (AWS_EXECUTION_ENV is set), load from Secrets Manager
 # Otherwise, use direct values from .env file
@@ -133,6 +165,11 @@ if os.environ.get("AWS_EXECUTION_ENV") is not None:
 
         litellm.success_callback = ["langfuse"]
         litellm.failure_callback = ["langfuse"]
+
+    # Load Supabase config from Secrets Manager
+    if supabase_config := get_supabase_config_from_secrets_manager(stack_name=settings.stack_name):
+        os.environ["SUPABASE_URL"] = supabase_config[0]
+        os.environ["SUPABASE_KEY"] = supabase_config[1]
 else:
     logger.info("Running locally - using secrets from .env file")
 
@@ -147,3 +184,7 @@ else:
 
         litellm.success_callback = ["langfuse"]
         litellm.failure_callback = ["langfuse"]
+
+    if settings.supabase_url and settings.supabase_key:
+        os.environ["SUPABASE_URL"] = settings.supabase_url
+        os.environ["SUPABASE_KEY"] = settings.supabase_key
