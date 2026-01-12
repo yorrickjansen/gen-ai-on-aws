@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, Dict
+from typing import Any
 
 from worker.models.queue import QueueMessage
 from worker.services.processor import Processor
@@ -19,7 +19,7 @@ logging.getLogger("litellm").setLevel(logging.WARNING)
 processor = Processor()
 
 
-async def process_message(message_body: str) -> Dict[str, Any]:
+async def process_message(message_body: str) -> dict[str, Any]:
     """Process a message from the SQS queue.
 
     Args:
@@ -47,7 +47,7 @@ async def process_message(message_body: str) -> Dict[str, Any]:
         return {"error": str(e), "success": False}
 
 
-def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """AWS Lambda handler function.
 
     Args:

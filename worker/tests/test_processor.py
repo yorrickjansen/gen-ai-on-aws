@@ -45,9 +45,7 @@ async def test_process_extract_user_request_no_user(mock_create, processor):
     mock_create.return_value = None
 
     # Create a test request
-    request = ExtractUserRequest(
-        text="This is a random text without any user information"
-    )
+    request = ExtractUserRequest(text="This is a random text without any user information")
 
     # Process the request
     result = await processor.process_extract_user_request(request)
@@ -93,15 +91,14 @@ def test_lambda_handler():
         }
 
         # Create a test event
+        test_text = "My name is John Doe, I am 30 years old, and my email is john@example.com"
         event = {
             "Records": [
                 {
                     "body": json.dumps(
                         {
                             "request_id": "test-id",
-                            "payload": {
-                                "text": "My name is John Doe, I am 30 years old, and my email is john@example.com"
-                            },
+                            "payload": {"text": test_text},
                         }
                     )
                 }

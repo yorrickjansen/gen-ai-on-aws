@@ -52,8 +52,7 @@ client = session.client(service_name="secretsmanager")
 def get_anthropic_api_key(stack_name: str) -> str:
     logger.info(f"Fetching API key for stack: {stack_name}")
     secret_name = (
-        settings.anthropic_api_key_secret_name
-        or f"gen-ai-on-aws/{stack_name}/anthropic_api_key"
+        settings.anthropic_api_key_secret_name or f"gen-ai-on-aws/{stack_name}/anthropic_api_key"
     )
 
     try:
