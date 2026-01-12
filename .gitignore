@@ -2,6 +2,16 @@
 provisioning/venv/
 app/venv/
 
+# Environment files with secrets
+.env
+api/.env
+worker/.env
+provisioning/.env
+
+# Generated version files
+api/gen_ai_on_aws/version.py
+worker/gen_ai_on_aws_worker/version.py
+
 # Build artifacts (packages and layers)
 api/build/
 worker/build/

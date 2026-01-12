@@ -1,8 +1,10 @@
 import logging
-from typing import Optional
 
 import instructor
 from fastapi import APIRouter, Depends, HTTPException
+from langfuse.decorators import langfuse_context, observe
+from litellm import completion
+
 from gen_ai_on_aws.config import VERSION, settings
 from gen_ai_on_aws.examples.types import (
     ExtractUserAsyncResponse,
@@ -10,8 +12,6 @@ from gen_ai_on_aws.examples.types import (
     User,
 )
 from gen_ai_on_aws.services.queue_service import QueueService
-from langfuse.decorators import langfuse_context, observe
-from litellm import completion
 
 # Create instructor client using litellm
 client = instructor.from_litellm(completion)
@@ -43,19 +43,23 @@ async def extract_user(request: ExtractUserRequest) -> User | None:
     logger.info(f"Extracting user from text: {request.text}")
     langfuse_context.update_current_trace(metadata={"app_version": VERSION})
 
-    response = client.chat.completions.create(
+    response = client.chat.completions.create(  # type: ignore[call-overload]
         model=settings.model,
         messages=[
             {
                 "role": "system",
-                "content": "Extract user information from the provided text. If no valid user information is found, return None. Only extract information if you're confident about the values.",
+                "content": (
+                    "Extract user information from the provided text. "
+                    "If no valid user information is found, return None. "
+                    "Only extract information if you're confident about the values."
+                ),
             },
             {
                 "role": "user",
                 "content": request.text,
             },
         ],
-        response_model=Optional[User],
+        response_model=User | None,  # type: ignore[arg-type]
         # https://langfuse.com/docs/integrations/litellm/tracing#use-within-decorated-function
         metadata={
             "existing_trace_id": langfuse_context.get_current_trace_id(),  # set langfuse trace ID

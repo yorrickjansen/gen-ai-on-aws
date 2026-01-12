@@ -321,6 +321,27 @@ The serverless architecture of this solution minimizes costs while maintaining s
 
 ## Local Development
 
+### Environment Setup
+
+Create a `.env` file in the `api/` directory with your API keys:
+
+```bash
+cd api
+cat > .env << EOF
+ANTHROPIC_API_KEY=sk-ant-xxx
+LANGFUSE_PUBLIC_KEY=pk-xxx
+LANGFUSE_SECRET_KEY=sk-xxx
+STACK_NAME=dev
+EOF
+```
+
+**How Secrets Work:**
+- **Local Development:** Secrets are loaded from the `.env` file via `pydantic-settings`
+- **AWS Lambda:** Secrets are automatically loaded from AWS Secrets Manager when `AWS_EXECUTION_ENV` is present
+- The application detects the environment and uses the appropriate secrets source
+
+**Never commit `.env` files** - they are gitignored by default.
+
 ### Run the FastAPI Server
 
 ```bash

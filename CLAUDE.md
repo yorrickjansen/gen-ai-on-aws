@@ -173,6 +173,38 @@ aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
 ### HTTP Calls
 - **Always use `httpie`** for making HTTP calls from the terminal (e.g., `http GET ...`).
 
+### Secrets Management
+
+The application uses **environment-based secrets management**:
+
+**Local Development (`.env` file)**:
+- Create an `api/.env` file with direct API keys:
+  ```env
+  ANTHROPIC_API_KEY=sk-ant-xxx
+  LANGFUSE_PUBLIC_KEY=pk-xxx
+  LANGFUSE_SECRET_KEY=sk-xxx
+  STACK_NAME=dev
+  ```
+- Secrets are loaded directly from the `.env` file via `pydantic-settings`
+- **Never commit `.env` files** - they are gitignored
+
+**AWS Lambda (Secrets Manager)**:
+- The presence of `AWS_EXECUTION_ENV` environment variable triggers Secrets Manager loading
+- Secrets are fetched from AWS Secrets Manager using the pattern: `gen-ai-on-aws/{stack_name}/{secret_name}`
+- Default secret names:
+  - `gen-ai-on-aws/{stack_name}/anthropic_api_key`
+  - `gen-ai-on-aws/{stack_name}/langfuse_public_key`
+  - `gen-ai-on-aws/{stack_name}/langfuse_secret_key`
+- Custom secret names can be specified via environment variables:
+  - `ANTHROPIC_API_KEY_SECRET_NAME`
+  - `LANGFUSE_PUBLIC_KEY_SECRET_NAME`
+  - `LANGFUSE_SECRET_KEY_SECRET_NAME`
+
+**Implementation Details**:
+- See `api/gen_ai_on_aws/config.py` for the secrets loading logic
+- Secrets are loaded at module import time and set as environment variables
+- Langfuse integration is automatically enabled if both public and secret keys are present
+
 
 ## Project Structure
 

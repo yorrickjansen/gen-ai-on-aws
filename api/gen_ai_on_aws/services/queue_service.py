@@ -2,6 +2,7 @@ import logging
 import uuid
 
 import boto3
+
 from gen_ai_on_aws.models.queue import QueueMessage
 
 logger = logging.getLogger(__name__)
@@ -17,14 +18,14 @@ class QueueService:
         self.queue_url = queue_url
         self.sqs_client = boto3.client("sqs")
 
-    def send_message(self, payload) -> str:
+    def send_message(self, payload) -> str | None:
         """Send a message to the SQS queue.
 
         Args:
             payload: The payload to be sent to the queue
 
         Returns:
-            str: The message ID if successful, otherwise None
+            str | None: The request ID if successful, otherwise None
         """
         request_id = str(uuid.uuid4())
         message = QueueMessage(request_id=request_id, payload=payload)
