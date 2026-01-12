@@ -59,7 +59,7 @@ async def extract_user(request: ExtractUserRequest) -> User | None:
                 "content": request.text,
             },
         ],
-        response_model=User | None,  # type: ignore[arg-type]
+        response_model=User,
         # https://langfuse.com/docs/integrations/litellm/tracing#use-within-decorated-function
         metadata={
             "existing_trace_id": langfuse_context.get_current_trace_id(),  # set langfuse trace ID
