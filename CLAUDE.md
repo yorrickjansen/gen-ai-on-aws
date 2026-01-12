@@ -9,6 +9,13 @@
 - **Never delete or overwrite existing code** unless explicitly instructed to do so.
 - **CRITICAL: When mentioning known bugs or issues, ALWAYS provide the full GitHub issue URL.** This is non-negotiable and extremely important for transparency and verification.
 - **When implementing workarounds for known bugs, add code comments with the issue URL.** This helps future developers understand why specific workarounds exist.
+- **CRITICAL: ALWAYS propose potential solutions and wait for explicit confirmation before implementing significant changes.** This includes but is not limited to:
+  - Changing Python versions or other core dependencies
+  - Modifying build or deployment configurations
+  - Changing project structure or architecture
+  - Adding or removing major dependencies
+  - Any change that could have wide-ranging side effects
+  - When in doubt, propose multiple options with trade-offs and wait for user decision
 
 ## Code Structure & Modularity
 - **Keep files concise.** Never create a file longer than 500 lines of code. If a file approaches this limit, refactor it by splitting it into smaller, focused modules.
@@ -167,6 +174,7 @@ aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
 - Run commands within the virtual environment using `uv run <command>`. For example, `uv run pytest`.
 - To run the project's main CLI, use the entrypoint: `uv run virtual-receptionist ...` (do NOT use `uv run python cli.py ...`).
 - Refer to pyproject.toml for the list of dependencies and their versions, as well as for python version (project.requires-python)
+- **CRITICAL: After any dependency changes (uv add, uv remove, or manual pyproject.toml edits), ALWAYS test that Lambda packaging still works by running `./api/build_lambda_package.sh` or `./worker/build_lambda_package.sh`**. This ensures all dependencies have compatible wheels for the Lambda Linux x86_64 environment.
 
 ### Logging
 - **Always use `loguru` for logging.**
@@ -219,6 +227,9 @@ VERY IMPORTANT: each directory has its own pyproject.toml file, with its own dep
 
 ## Build & Deployment
 - Run `app/build_lambda_package.sh` to create Lambda zip package
+- **CRITICAL: NEVER run `pulumi up`, `pulumi destroy`, or any other Pulumi deployment commands.** Infrastructure deployment is ALWAYS done manually by the user.
+- You may run `pulumi preview` to show what changes would be made, but only when explicitly asked.
+- **A Claude Code hook is configured in `.claude/settings.json` to automatically block deployment commands** (`pulumi up`, `pulumi destroy`, `pulumi refresh`, `pulumi import`, stack mutations).
 
 ## Testing
 - Framework: pytest with pytest-asyncio

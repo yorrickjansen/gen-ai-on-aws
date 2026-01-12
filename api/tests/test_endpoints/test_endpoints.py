@@ -99,29 +99,19 @@ def test_extract_user_async(mock_send_message, mock_settings, client):
         "SUPABASE_KEY": "test-key",
     },
 )
-@mock.patch("gen_ai_on_aws.endpoints.endpoints.acreate_client")
-def test_supabase_read(mock_acreate_client, client):
+@mock.patch("httpx.AsyncClient.get")
+def test_supabase_read(mock_httpx_get, client):
     """Test the Supabase read endpoint with successful response."""
-    # Mock the Supabase client response
-    mock_client = mock.Mock()
-    mock_table = mock.Mock()
-    mock_select = mock.Mock()
+    # Mock the HTTP response
     mock_response = mock.Mock()
-    mock_response.data = [
+    mock_response.json.return_value = [
         {"id": 1, "name": "Test User 1"},
         {"id": 2, "name": "Test User 2"},
     ]
+    mock_response.raise_for_status = mock.Mock()
 
-    # Chain the mock calls
-    mock_client.table.return_value = mock_table
-    mock_table.select.return_value = mock_select
-    mock_select.execute = mock.AsyncMock(return_value=mock_response)
-
-    # Mock acreate_client to return the mock client when awaited
-    async def mock_create(url, key):
-        return mock_client
-
-    mock_acreate_client.side_effect = mock_create
+    # Mock httpx.AsyncClient.get to return the mock response
+    mock_httpx_get.return_value = mock_response
 
     # Test the endpoint
     response = client.post(
@@ -137,6 +127,14 @@ def test_supabase_read(mock_acreate_client, client):
     assert data["data"][0]["id"] == 1
     assert data["data"][0]["name"] == "Test User 1"
 
+    # Verify the HTTP call was made correctly
+    mock_httpx_get.assert_called_once()
+    call_args = mock_httpx_get.call_args
+    assert call_args.args[0] == "https://test.supabase.co/rest/v1/users"
+    assert call_args.kwargs["params"] == {"select": "*"}
+    assert call_args.kwargs["headers"]["apikey"] == "test-key"
+    assert call_args.kwargs["headers"]["Authorization"] == "Bearer test-key"
+
 
 @mock.patch.dict(
     os.environ,
@@ -145,28 +143,16 @@ def test_supabase_read(mock_acreate_client, client):
         "SUPABASE_KEY": "test-key",
     },
 )
-@mock.patch("gen_ai_on_aws.endpoints.endpoints.acreate_client")
-def test_supabase_read_with_limit(mock_acreate_client, client):
+@mock.patch("httpx.AsyncClient.get")
+def test_supabase_read_with_limit(mock_httpx_get, client):
     """Test the Supabase read endpoint with limit parameter."""
-    # Mock the Supabase client response
-    mock_client = mock.Mock()
-    mock_table = mock.Mock()
-    mock_select = mock.Mock()
-    mock_limit = mock.Mock()
+    # Mock the HTTP response
     mock_response = mock.Mock()
-    mock_response.data = [{"id": 1, "name": "Test User 1"}]
+    mock_response.json.return_value = [{"id": 1, "name": "Test User 1"}]
+    mock_response.raise_for_status = mock.Mock()
 
-    # Chain the mock calls
-    mock_client.table.return_value = mock_table
-    mock_table.select.return_value = mock_select
-    mock_select.limit.return_value = mock_limit
-    mock_limit.execute = mock.AsyncMock(return_value=mock_response)
-
-    # Mock acreate_client to return the mock client when awaited
-    async def mock_create(url, key):
-        return mock_client
-
-    mock_acreate_client.side_effect = mock_create
+    # Mock httpx.AsyncClient.get to return the mock response
+    mock_httpx_get.return_value = mock_response
 
     # Test the endpoint
     response = client.post(
@@ -180,8 +166,9 @@ def test_supabase_read_with_limit(mock_acreate_client, client):
     assert "data" in data
     assert len(data["data"]) == 1
 
-    # Verify limit was called
-    mock_select.limit.assert_called_once_with(1)
+    # Verify the HTTP call included the limit parameter
+    call_args = mock_httpx_get.call_args
+    assert call_args.kwargs["params"]["limit"] == "1"
 
 
 @mock.patch.dict(os.environ, {}, clear=True)
@@ -204,24 +191,11 @@ def test_supabase_read_missing_config(client):
         "SUPABASE_KEY": "test-key",
     },
 )
-@mock.patch("gen_ai_on_aws.endpoints.endpoints.acreate_client")
-def test_supabase_read_query_error(mock_acreate_client, client):
+@mock.patch("httpx.AsyncClient.get")
+def test_supabase_read_query_error(mock_httpx_get, client):
     """Test the Supabase read endpoint when query fails."""
-    # Mock the Supabase client to raise an error
-    mock_client = mock.Mock()
-    mock_table = mock.Mock()
-    mock_select = mock.Mock()
-    mock_select.execute = mock.AsyncMock(side_effect=Exception("Database connection error"))
-
-    # Chain the mock calls
-    mock_client.table.return_value = mock_table
-    mock_table.select.return_value = mock_select
-
-    # Mock acreate_client to return the mock client when awaited
-    async def mock_create(url, key):
-        return mock_client
-
-    mock_acreate_client.side_effect = mock_create
+    # Mock httpx to raise an error
+    mock_httpx_get.side_effect = Exception("Database connection error")
 
     # Test the endpoint
     response = client.post(

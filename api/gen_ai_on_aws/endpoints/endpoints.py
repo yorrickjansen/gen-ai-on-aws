@@ -1,11 +1,11 @@
 import logging
 import os
 
+import httpx
 import instructor
 from fastapi import APIRouter, Depends, HTTPException
 from langfuse.decorators import langfuse_context, observe
 from litellm import completion
-from supabase import AsyncClient, acreate_client
 
 from gen_ai_on_aws.config import VERSION, settings
 from gen_ai_on_aws.endpoints.types import (
@@ -36,11 +36,11 @@ def get_queue_service() -> QueueService:
     return QueueService(queue_url=settings.sqs_queue_url)
 
 
-async def get_supabase_client() -> AsyncClient:
-    """Dependency to get the Supabase async client.
+def get_supabase_config() -> tuple[str, str]:
+    """Dependency to get Supabase configuration.
 
     Returns:
-        AsyncClient: The initialized Supabase async client
+        tuple[str, str]: Tuple of (supabase_url, supabase_key)
 
     Raises:
         HTTPException: If Supabase URL or key is not configured
@@ -54,7 +54,7 @@ async def get_supabase_client() -> AsyncClient:
             detail="Supabase URL and key must be configured in environment variables",
         )
 
-    return await acreate_client(supabase_url, supabase_key)
+    return supabase_url, supabase_key
 
 
 @router.get("/hello")
@@ -125,13 +125,13 @@ async def extract_user_async(
 @router.post("/supabase-read")
 async def supabase_read(
     request: SupabaseReadRequest,
-    supabase_client: AsyncClient = Depends(get_supabase_client),
+    supabase_config: tuple[str, str] = Depends(get_supabase_config),
 ) -> SupabaseReadResponse:
-    """Read data from a Supabase table.
+    """Read data from a Supabase table using the REST API.
 
     Args:
         request: The request containing table name, select columns, and optional limit
-        supabase_client: The Supabase async client dependency
+        supabase_config: Tuple of (supabase_url, supabase_key) from dependency
 
     Returns:
         SupabaseReadResponse: Response containing the data from Supabase
@@ -140,19 +140,35 @@ async def supabase_read(
         HTTPException: If there's an error reading from Supabase
     """
     logger.info(f"Reading from Supabase table: {request.table}")
+    supabase_url, supabase_key = supabase_config
 
     try:
-        # Build the query
-        query = supabase_client.table(request.table).select(request.select)
+        # Build the Supabase REST API URL
+        url = f"{supabase_url}/rest/v1/{request.table}"
 
-        # Apply limit if specified
+        # Build query parameters
+        params = {"select": request.select}
         if request.limit:
-            query = query.limit(request.limit)
+            params["limit"] = str(request.limit)
 
-        # Execute the query
-        response = await query.execute()
+        # Set up headers for Supabase REST API
+        headers = {
+            "apikey": supabase_key,
+            "Authorization": f"Bearer {supabase_key}",
+        }
 
-        return SupabaseReadResponse(data=response.data)
+        # Make the HTTP request
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params, headers=headers)
+            response.raise_for_status()
+
+        return SupabaseReadResponse(data=response.json())
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error reading from Supabase: {e}")
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Failed to read from Supabase: {e.response.text}",
+        ) from e
     except Exception as e:
         logger.error(f"Error reading from Supabase: {e}")
         raise HTTPException(

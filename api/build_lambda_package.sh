@@ -54,7 +54,7 @@ else
     uv pip install \
        --no-installer-metadata \
        --no-compile-bytecode \
-       --python-platform x86_64-manylinux_2_17 \
+       --python-platform x86_64-manylinux_2_28 \
        --python 3.13 \
        --prefix "build/layers/${LAYER_NAME}/python" \
        -r "build/requirements-${DEPS_HASH}.txt"

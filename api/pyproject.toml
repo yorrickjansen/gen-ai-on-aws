@@ -8,6 +8,8 @@ dependencies = [
     "boto3>=1.37.5",
     # FastAPI is a modern web framework for building APIs with Python.
     "fastapi",
+    # httpx is used for making HTTP requests (including to Supabase REST API)
+    "httpx>=0.28.1",
     # Pinned versions for litellm+instructor+langfuse compatibility
     # Issue: https://github.com/BerriAI/litellm/issues/17219
     # Error in 1.80.0+: 'CompletionUsage' object has no attribute 'get'
@@ -18,7 +20,6 @@ dependencies = [
     # Mangum is a library that adapts ASGI applications to AWS Lambda and API Gateway.
     "mangum",
     "pydantic-settings>=2.2.2",
-    "supabase>=2.27.1",
 ]
 
 [dependency-groups]
