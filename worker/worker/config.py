@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import TYPE_CHECKING
 
 import boto3
 import litellm
@@ -10,11 +11,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Setup module logger based on environment configuration
 logger = logging.getLogger(__name__)
 
-
-try:
-    from worker.version import VERSION
-except ImportError:
-    VERSION = "local"
+# Version handling: try to import from version.py (generated during build),
+# fallback to "local" for development
+if TYPE_CHECKING:
+    VERSION: str = "local"
+else:
+    try:
+        from worker.version import VERSION
+    except ImportError:
+        VERSION = "local"
 
 
 class LangFuseConfig(BaseModel):
@@ -45,7 +50,7 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
-session = boto3.session.Session()
+session = boto3.Session()
 client = session.client(service_name="secretsmanager")
 
 
@@ -75,7 +80,7 @@ def get_langfuse_config(stack_name: str) -> LangFuseConfig | None:
     )
     host = settings.langfuse_host
 
-    session = boto3.session.Session()
+    session = boto3.Session()
     client = session.client(service_name="secretsmanager")
 
     try:
@@ -92,12 +97,11 @@ def get_langfuse_config(stack_name: str) -> LangFuseConfig | None:
         return None
 
 
-if anthropic_api_key := get_anthropic_api_key(stack_name=settings.stack_name):
-    os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
-
-
-# configure langfuse is running inside AWS Lambda
+# Configure secrets when running inside AWS Lambda
 if os.environ.get("AWS_EXECUTION_ENV") is not None:
+    if anthropic_api_key := get_anthropic_api_key(stack_name=settings.stack_name):
+        os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
+
     if langfuse_config := get_langfuse_config(stack_name=settings.stack_name):
         os.environ["LANGFUSE_PUBLIC_KEY"] = langfuse_config.public_key
         os.environ["LANGFUSE_SECRET_KEY"] = langfuse_config.secret_key
