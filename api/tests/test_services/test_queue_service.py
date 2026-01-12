@@ -2,7 +2,7 @@ import unittest.mock as mock
 
 import pytest
 
-from gen_ai_on_aws.examples.types import ExtractUserRequest
+from gen_ai_on_aws.endpoints.types import ExtractUserRequest
 from gen_ai_on_aws.services.queue_service import QueueService
 
 

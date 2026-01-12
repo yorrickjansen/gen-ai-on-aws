@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from gen_ai_on_aws.examples.types import ExtractUserRequest
+from gen_ai_on_aws.endpoints.types import ExtractUserRequest
 
 
 class QueueMessage(BaseModel):

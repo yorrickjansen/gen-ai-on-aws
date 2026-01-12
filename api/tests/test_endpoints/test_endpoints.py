@@ -4,7 +4,7 @@ import unittest.mock as mock
 import pytest
 from fastapi.testclient import TestClient
 
-from gen_ai_on_aws.examples.types import User
+from gen_ai_on_aws.endpoints.types import User
 from gen_ai_on_aws.main import app
 from gen_ai_on_aws.services.queue_service import QueueService
 
@@ -17,7 +17,7 @@ def client():
 
 def test_hello(client):
     """Test the hello endpoint."""
-    response = client.get("/examples/hello")
+    response = client.get("/endpoints/hello")
     assert response.status_code == 200
     assert response.json() == "Hello, world!"
 
@@ -25,7 +25,7 @@ def test_hello(client):
 def test_extract_user(client):
     """Test the extract user endpoint with valid user data."""
     test_text = "My name is John Doe, I am 30 years old, and my email is john@example.com"
-    response = client.post("/examples/extract-user", json={"text": test_text})
+    response = client.post("/endpoints/extract-user", json={"text": test_text})
 
     assert response.status_code == 200
     data = response.json()
@@ -37,7 +37,7 @@ def test_extract_user(client):
 
     # Test with missing email
     test_text_no_email = "My name is Jane Doe and I am 25 years old"
-    response = client.post("/examples/extract-user", json={"text": test_text_no_email})
+    response = client.post("/endpoints/extract-user", json={"text": test_text_no_email})
 
     assert response.status_code == 200
     data = response.json()
@@ -52,7 +52,7 @@ def test_extract_user_failure(client):
     """Test the extract user endpoint with invalid user data."""
     # Test with text that doesn't contain any user information
     test_text = "This is a random text without any user information"
-    response = client.post("/examples/extract-user", json={"text": test_text})
+    response = client.post("/endpoints/extract-user", json={"text": test_text})
 
     # Since the LLM might try to hallucinate or return placeholder values,
     # we accept either None or a User object with placeholder values
@@ -68,7 +68,7 @@ def test_extract_user_failure(client):
         assert data["name"] in ["<UNKNOWN>", "Unknown", ""] or data["age"] == 0
 
 
-@mock.patch("gen_ai_on_aws.examples.examples.settings")
+@mock.patch("gen_ai_on_aws.endpoints.endpoints.settings")
 @mock.patch.object(QueueService, "send_message")
 def test_extract_user_async(mock_send_message, mock_settings, client):
     """Test the async extract user endpoint."""
@@ -80,7 +80,7 @@ def test_extract_user_async(mock_send_message, mock_settings, client):
 
     # Test the endpoint
     test_text = "My name is John Doe, I am 30 years old, and my email is john@example.com"
-    response = client.post("/examples/extract-user-async", json={"text": test_text})
+    response = client.post("/endpoints/extract-user-async", json={"text": test_text})
 
     # Check the response
     assert response.status_code == 200
@@ -99,7 +99,7 @@ def test_extract_user_async(mock_send_message, mock_settings, client):
         "SUPABASE_KEY": "test-key",
     },
 )
-@mock.patch("gen_ai_on_aws.examples.examples.acreate_client")
+@mock.patch("gen_ai_on_aws.endpoints.endpoints.acreate_client")
 def test_supabase_read(mock_acreate_client, client):
     """Test the Supabase read endpoint with successful response."""
     # Mock the Supabase client response
@@ -125,7 +125,7 @@ def test_supabase_read(mock_acreate_client, client):
 
     # Test the endpoint
     response = client.post(
-        "/examples/supabase-read",
+        "/endpoints/supabase-read",
         json={"table": "users", "select": "*"},
     )
 
@@ -145,7 +145,7 @@ def test_supabase_read(mock_acreate_client, client):
         "SUPABASE_KEY": "test-key",
     },
 )
-@mock.patch("gen_ai_on_aws.examples.examples.acreate_client")
+@mock.patch("gen_ai_on_aws.endpoints.endpoints.acreate_client")
 def test_supabase_read_with_limit(mock_acreate_client, client):
     """Test the Supabase read endpoint with limit parameter."""
     # Mock the Supabase client response
@@ -170,7 +170,7 @@ def test_supabase_read_with_limit(mock_acreate_client, client):
 
     # Test the endpoint
     response = client.post(
-        "/examples/supabase-read",
+        "/endpoints/supabase-read",
         json={"table": "users", "select": "*", "limit": 1},
     )
 
@@ -188,7 +188,7 @@ def test_supabase_read_with_limit(mock_acreate_client, client):
 def test_supabase_read_missing_config(client):
     """Test the Supabase read endpoint when URL/key is not configured."""
     response = client.post(
-        "/examples/supabase-read",
+        "/endpoints/supabase-read",
         json={"table": "users", "select": "*"},
     )
 
@@ -204,7 +204,7 @@ def test_supabase_read_missing_config(client):
         "SUPABASE_KEY": "test-key",
     },
 )
-@mock.patch("gen_ai_on_aws.examples.examples.acreate_client")
+@mock.patch("gen_ai_on_aws.endpoints.endpoints.acreate_client")
 def test_supabase_read_query_error(mock_acreate_client, client):
     """Test the Supabase read endpoint when query fails."""
     # Mock the Supabase client to raise an error
@@ -225,7 +225,7 @@ def test_supabase_read_query_error(mock_acreate_client, client):
 
     # Test the endpoint
     response = client.post(
-        "/examples/supabase-read",
+        "/endpoints/supabase-read",
         json={"table": "users", "select": "*"},
     )
 

@@ -8,7 +8,7 @@ from litellm import completion
 from supabase import AsyncClient, acreate_client
 
 from gen_ai_on_aws.config import VERSION, settings
-from gen_ai_on_aws.examples.types import (
+from gen_ai_on_aws.endpoints.types import (
     ExtractUserAsyncResponse,
     ExtractUserRequest,
     SupabaseReadRequest,

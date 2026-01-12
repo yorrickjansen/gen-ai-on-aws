@@ -2,9 +2,10 @@ import logging
 import os
 
 from fastapi import FastAPI
+from mangum import Mangum
+
 from gen_ai_on_aws.config import settings
 from gen_ai_on_aws.routers import router
-from mangum import Mangum
 
 # Get logging level from environment variable or default to INFO
 log_level_name = os.environ.get("LOGGING_LEVEL", "INFO")
