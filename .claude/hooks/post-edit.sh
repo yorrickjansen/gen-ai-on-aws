@@ -10,6 +10,9 @@ if [[ "$file_path" =~ \.py$ ]]; then
   # Get the project root directory (where this script is located)
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+  # Unset VIRTUAL_ENV to let uv auto-detect the correct environment for each project
+  unset VIRTUAL_ENV
+
   # Determine which directory to run from (api vs provisioning vs worker)
   if [[ "$file_path" =~ ^api/ ]]; then
     cd "$SCRIPT_DIR/api"

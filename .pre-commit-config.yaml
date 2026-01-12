@@ -19,21 +19,21 @@ repos:
   hooks:
     - id: pyright
       name: pyright
-      entry: bash -c 'cd api && uv run pyright'
+      entry: bash -c 'unset VIRTUAL_ENV && cd api && uv run pyright'
       language: system
       types: [python]
       pass_filenames: false
       files: ^api/
     - id: pyright-provisioning
       name: pyright (provisioning)
-      entry: bash -c 'cd provisioning && uv run pyright'
+      entry: bash -c 'unset VIRTUAL_ENV && cd provisioning && uv run pyright'
       language: system
       types: [python]
       pass_filenames: false
       files: ^provisioning/
     - id: pyright-worker
       name: pyright (worker)
-      entry: bash -c 'cd worker && uv run pyright'
+      entry: bash -c 'unset VIRTUAL_ENV && cd worker && uv run pyright'
       language: system
       types: [python]
       pass_filenames: false
