@@ -18,6 +18,7 @@ dependencies = [
     "langfuse==2.60.8",
     "litellm==1.74.6",
     # Mangum is a library that adapts ASGI applications to AWS Lambda and API Gateway.
+    "loguru>=0.7.3",
     "mangum",
     "pydantic-settings>=2.2.2",
 ]

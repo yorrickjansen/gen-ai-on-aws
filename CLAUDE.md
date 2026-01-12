@@ -177,7 +177,10 @@ aws logs tail --follow /aws/lambda/$(pulumi stack output lambda_function_name)
 - **CRITICAL: After any dependency changes (uv add, uv remove, or manual pyproject.toml edits), ALWAYS test that Lambda packaging still works by running `./api/build_lambda_package.sh` or `./worker/build_lambda_package.sh`**. This ensures all dependencies have compatible wheels for the Lambda Linux x86_64 environment.
 
 ### Logging
-- **Always use `loguru` for logging.**
+- **ALWAYS use `loguru` for logging - NEVER use Python's standard `logging` module.**
+  - Import: `from loguru import logger`
+  - DO NOT use: `import logging` or `logger = logging.getLogger(__name__)`
+  - This applies to ALL Python files in both API and Worker directories
 - **Configure logging to output in a structured (JSON) format.**
 - **Add relevant context to the logger** whenever possible (e.g., request ID, user ID) to simplify debugging and tracing.
 

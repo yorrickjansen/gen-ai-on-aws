@@ -1,13 +1,10 @@
-import logging
-
 import instructor
 from langfuse.decorators import langfuse_context, observe
 from litellm import completion
+from loguru import logger
 
 from worker.config import VERSION, settings
 from worker.models.queue import ExtractUserRequest, User
-
-logger = logging.getLogger(__name__)
 
 # Create instructor client using litellm
 client = instructor.from_litellm(completion)

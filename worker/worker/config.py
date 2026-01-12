@@ -1,15 +1,12 @@
 import json
-import logging
 import os
 from typing import TYPE_CHECKING
 
 import boto3
 import litellm
+from loguru import logger
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-# Setup module logger based on environment configuration
-logger = logging.getLogger(__name__)
 
 # Version handling: try to import from version.py (generated during build),
 # fallback to "local" for development

@@ -1,4 +1,3 @@
-import logging
 import os
 
 import httpx
@@ -6,6 +5,7 @@ import instructor
 from fastapi import APIRouter, Depends, HTTPException
 from langfuse.decorators import langfuse_context, observe
 from litellm import completion
+from loguru import logger
 
 from gen_ai_on_aws.config import VERSION, settings
 from gen_ai_on_aws.endpoints.types import (
@@ -22,7 +22,6 @@ client = instructor.from_litellm(completion)
 
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 
 def get_queue_service() -> QueueService:

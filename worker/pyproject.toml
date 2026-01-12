@@ -9,6 +9,7 @@ dependencies = [
     "instructor>=1.7.2",
     "langfuse>=2.59.7",
     "litellm>=1.62.1",
+    "loguru>=0.7.3",
     "pydantic>=2.6.4",
     "pydantic-settings>=2.2.2",
 ]
