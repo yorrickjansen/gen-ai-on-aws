@@ -487,8 +487,8 @@ git commit --no-verify
 - ✅ Codecov integration
 - ✅ Monitoring, alerting ([docs](docs/monitoring.md))
 - ✅ Lambda layers optimization for faster deployments
-- ⬜ Use pyright for type checking
-- ⬜ Add dependency scanning with github, to create PRs to bump packages
+- ✅ Use pyright for type checking
+- ✅ Add dependency scanning with github, to create PRs to bump packages
 - ⬜ tracing, backups, with optional integration with Incidents Manager / Incident.io
 - ⬜ LLM chain/pattern examples
 - ⬜ Dynamic loading of prompt using Langfuse, for faster experimentation

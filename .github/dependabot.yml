@@ -1,0 +1,48 @@
+version: 2
+updates:
+  # API project dependencies
+  - package-ecosystem: "pip"
+    directory: "/api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "api"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+
+  # Worker project dependencies
+  - package-ecosystem: "pip"
+    directory: "/worker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "worker"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+
+  # Provisioning (Pulumi) project dependencies
+  - package-ecosystem: "pip"
+    directory: "/provisioning"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "provisioning"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 3
