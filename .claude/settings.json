@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-pulumi-deployment.sh",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-pulumi-deployment.sh",
             "timeout": 5,
             "stdin": "{{ parameters.command }}"
           }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit.sh",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit.sh",
             "timeout": 30
           }
         ]
