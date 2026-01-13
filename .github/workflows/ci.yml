@@ -188,7 +188,7 @@ jobs:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Install Pulumi
-      uses: pulumi/actions@v5
+      uses: pulumi/actions@v6
     - name: Test Pulumi configuration
       run: |
         ./build_lambda_packages.sh
