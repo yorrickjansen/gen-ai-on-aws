@@ -221,25 +221,25 @@ jobs:
         chmod +x ./build_lambda_packages.sh
         ./build_lambda_packages.sh
     - name: Upload API package artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: api-package
         path: api/build/packages/api-*.zip
         retention-days: 7
     - name: Upload API layer artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: api-layer
         path: api/build/layers/*-api-libs.zip
         retention-days: 7
     - name: Upload worker package artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: worker-package
         path: worker/build/packages/worker-*.zip
         retention-days: 7
     - name: Upload worker layer artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: worker-layer
         path: worker/build/layers/*-worker-libs.zip
