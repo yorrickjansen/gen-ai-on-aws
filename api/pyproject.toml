@@ -15,7 +15,7 @@ dependencies = [
     # Error in 1.80.0+: 'CompletionUsage' object has no attribute 'get'
     # These versions are confirmed working together
     "instructor==1.13.0",
-    "langfuse==2.60.8",
+    "langfuse==3.11.2",
     "litellm==1.74.6",
     # Mangum is a library that adapts ASGI applications to AWS Lambda and API Gateway.
     "loguru>=0.7.3",
